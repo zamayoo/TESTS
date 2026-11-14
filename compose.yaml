@@ -10,7 +10,7 @@ services:
       - "10.242.211.113:8080:8080"
     volumes:
       - ./data:/data
-      - ./models:/models:ro
+      - ./models:/models
     security_opt:
       - no-new-privileges:true
     healthcheck:
