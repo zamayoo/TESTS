@@ -3,4 +3,7 @@ secrets/
 .env.*
 *.pem
 id_ed25519
+data/
+models/
+__pycache__/
 
