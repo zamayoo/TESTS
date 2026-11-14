@@ -7,5 +7,6 @@ COPY server/ /app/server/
 COPY dist/questions.json /app/questions.json
 COPY dist/ /app/dist/
 ENV PYTHONUNBUFFERED=1
+ENV VOICE_DIR=/models
 EXPOSE 8080
-CMD ["uvicorn", "server.main:app", "--host", "0.0.0.0", "--port", "8080", "--proxy-headers", "--forwarded-allow-ips", "127.0.0.1"]
+CMD ["sh", "-c", "python /app/server/download_voice.py >/tmp/voice-install.log 2>&1 & exec uvicorn server.main:app --host 0.0.0.0 --port 8080 --proxy-headers --forwarded-allow-ips 127.0.0.1"]
