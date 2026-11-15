@@ -64,7 +64,7 @@ window.testsAccount = (() => {
     const taken=Object.values(answers), correct=taken.filter(x=>x?.correct).length;
     const certificates=user.certificates||[];
     el('accountStats').innerHTML=`<div class="stat"><div><small>ОПРАЦЬОВАНО</small><strong>${taken.length}</strong></div></div><div class="stat"><div><small>ПРАВИЛЬНИХ</small><strong>${correct}</strong></div></div><div class="stat"><div><small>ТОЧНІСТЬ</small><strong>${taken.length?Math.round(correct/taken.length*100):0}%</strong></div></div><div class="stat"><div><small>ТЕСТУВАНЬ</small><strong>${certificates.length}</strong></div></div>`;
-    el('accountCertificates').innerHTML=certificates.length?certificates.map(c=>`<div class="certificate-row"><span>${safe(c.name)}<small>${new Date(c.created_at*1000).toLocaleDateString('uk-UA')}</small></span><strong>${c.score} балів · ${c.passed?'Успішно':'Не пройдено'}</strong></div>`).join(''):'<p>Ще немає результатів сертифікаційного тестування.</p>';
+    el('accountCertificates').innerHTML=certificates.length?certificates.map(c=>`<div class="certificate-row"><span>${safe(c.name)}<small>${new Date(c.created_at*1000).toLocaleDateString('uk-UA')}</small></span><strong>${c.score} балів · ${c.passed?'Успішно':'Не пройдено'}<small><a href="/verify/${encodeURIComponent(c.id)}" target="_blank" rel="noopener noreferrer">Перевірити в реєстрі ↗</a></small></strong></div>`).join(''):'<p>Ще немає результатів сертифікаційного тестування.</p>';
 
     const demo=user.demo_certificates?.[0];
     el('demoCertificateSection').hidden=!demo;
@@ -116,7 +116,7 @@ window.testsAccount = (() => {
 
         <footer class="demo-cert-footer">
           <div class="demo-cert-data"><span>УНІКАЛЬНИЙ НОМЕР</span><strong>${code}</strong><small>CHECK ${checksum}</small></div>
-          <div class="demo-cert-matrix">${demoSecurityMatrix(demo.code)}<span>ВІЗУАЛЬНА МАТРИЦЯ<br>НЕ Є QR-КОДОМ</span></div>
+          <div class="demo-cert-matrix"><a href="/verify/${encodeURIComponent(demo.code)}" target="_blank" rel="noopener noreferrer" aria-label="Перевірити демонстраційний сертифікат у реєстрі"><img src="/api/certificates/qr/${encodeURIComponent(demo.code)}" alt="QR-код перевірки сертифіката" width="104" height="104"></a><span>СКАНУЙТЕ ДЛЯ<br>ПЕРЕВІРКИ У РЕЄСТРІ</span></div>
           <div class="demo-cert-data demo-cert-date"><span>ДАТА ФОРМУВАННЯ</span><strong>${issued}</strong><small>КИЇВ · UA</small></div>
         </footer>
 
@@ -147,11 +147,34 @@ window.testsAccount = (() => {
     el('showLogin').onclick=()=>mode('login');
     el('showRegister').onclick=()=>mode('register');
     el('showForgot').onclick=()=>mode('forgot');
-    el('printDemoCertificate').onclick=()=>{
-      document.body.classList.add('print-demo-certificate');
-      window.print();
+    let printRoot=null;
+    const clearPrint=()=>{
+      document.body.classList.remove('print-demo-certificate');
+      printRoot?.remove();
+      printRoot=null;
     };
-    window.addEventListener('afterprint',()=>document.body.classList.remove('print-demo-certificate'));
+    el('printDemoCertificate').onclick=async()=>{
+      const source=el('demoCertificateCanvas');
+      if(!source || el('demoCertificateSection').hidden)return;
+      clearPrint();
+      printRoot=document.createElement('div');
+      printRoot.id='certificatePrintRoot';
+      const copy=source.cloneNode(true);
+      copy.removeAttribute('id');
+      copy.setAttribute('aria-label','Демонстраційний сертифікат для друку');
+      printRoot.appendChild(copy);
+      document.body.appendChild(printRoot);
+      document.body.classList.add('print-demo-certificate');
+      try{
+        await Promise.all(Array.from(copy.querySelectorAll('img')).map(img=>img.decode().catch(()=>{})));
+        window.print();
+      }catch(error){
+        el('authNotice').textContent='Не вдалося відкрити друк: '+error.message;
+        clearPrint();
+      }
+    };
+    window.addEventListener('afterprint',clearPrint);
+
     el('accountLogout').onclick=async()=>{try{await api('logout',{method:'POST'});user=null;render();el('authNotice').textContent='Ви вийшли з кабінету.';}catch(e){el('authNotice').textContent=e.message}};
     const params=new URLSearchParams(location.search);
     if(params.has('reset')){mode('reset'); el('authEmail').closest('label').hidden=true;show();}
