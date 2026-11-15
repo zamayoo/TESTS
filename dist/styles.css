@@ -199,3 +199,29 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .course-header-actions #studyModeBtn,.course-header-actions #examModeBtn{background:#f7faf9;color:var(--ink-2);border:1px solid var(--line);outline:0}.course-header-actions #studyModeBtn.selected,.course-header-actions #examModeBtn.selected{background:var(--brand-dark);color:#fff;border-color:transparent}
 .profile-summary{align-items:flex-start}.profile-form{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:12px}.profile-form label{display:grid;gap:6px;font-size:9px;font-weight:800;letter-spacing:.06em;color:var(--muted)}.profile-form input{width:100%;min-width:0;padding:12px;border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--ink);font:inherit}.profile-form input[readonly]{background:#edf3f1;color:var(--muted)}.profile-form-actions{grid-column:1/-1;display:flex;align-items:center;gap:14px}.profile-form-actions button{min-height:42px;padding:0 16px;border:0;border-radius:9px;background:var(--brand-dark);font-size:11px;font-weight:800}.profile-form-actions span{font-size:10px;color:var(--brand)}
 @media(max-width:640px){.profile-summary{align-items:flex-start}.profile-form{grid-template-columns:1fr;width:100%}.profile-form-actions{grid-column:1}.profile-avatar{display:none}}
+
+
+/* Personal progress & audio settings have their own workspaces */
+#accountView .account-learning-progress{margin:27px 0;padding:21px;border:1px solid #deebe8;border-radius:18px;background:#fafdfe}
+#accountView .account-learning-progress>h3,#accountView .account-data-tools>h3{font-size:20px;color:#18444b;margin:0 0 8px}
+#accountView .account-learning-progress>p{font-size:13px;color:#688589;line-height:1.55;margin:0 0 18px}
+#accountView .topic-overview{margin:0;background:transparent;box-shadow:none;border:0;padding:0}
+#accountView .topic-overview-head{display:none}
+#accountView .account-data-tools{margin:25px 0;padding:22px;border:1px solid #dce9e7;border-radius:18px;background:#fff}
+#accountView .account-data-tools .sidebar-bottom{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0;padding:0;border:0}
+#accountView .account-data-tools .sidebar-bottom .nav-label,#accountView .account-data-tools .sidebar-bottom>p:last-child{grid-column:1/-1}
+#accountView .account-data-tools .sidebar-bottom .nav-label{display:none}
+#accountView .account-data-tools .sidebar-bottom .small-btn{display:flex;align-items:center;justify-content:center;min-height:48px;padding:12px;border:1px solid #cce2dd;background:#f6fbf9;color:#135c5d;font-size:12px;font-weight:750;margin:0;border-radius:11px;cursor:pointer}
+#accountView .account-data-tools .sidebar-bottom>p:last-child{font-size:12px;color:#68888b;margin:4px 0 0;padding:12px 15px;border-radius:10px;background:#eaf7f3;line-height:1.55}
+#settingsView{max-width:1150px;margin:0 auto}
+#settingsView .voice-settings{display:block;background:#fff;border:1px solid #dcebe8;border-radius:20px;padding:clamp(18px,2.4vw,30px);box-shadow:0 8px 26px #0f51510d}
+#settingsView .voice-settings summary{display:flex;align-items:center;gap:12px;cursor:pointer;list-style:none}
+#settingsView .voice-settings summary::-webkit-details-marker{display:none}
+#settingsView .voice-settings summary .summary-open{margin-left:auto;font-size:12px;color:#0b7771}
+#settingsView .voice-settings[open] summary{margin-bottom:20px}
+#settingsView .voice-settings-body{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
+#settingsView .voice-settings-body label{display:grid;gap:9px;font-weight:750;color:#356068;font-size:13px}
+#settingsView .voice-settings-body select{width:100%;min-width:0;padding:12px;border:1px solid #d2e3e0;border-radius:11px;background:#fff}
+#settingsView #testSound{grid-column:1/-1;width:fit-content;min-width:180px;background:#09666b;border-color:#09666b;color:white;text-align:center}
+#settingsView .audio-replay{grid-column:1/-1}
+@media(max-width:760px){#accountView .account-data-tools .sidebar-bottom{display:grid;grid-template-columns:1fr}.account-data-tools .sidebar-bottom{display:grid!important}#settingsView .voice-settings-body{grid-template-columns:1fr}}
