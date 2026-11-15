@@ -107,6 +107,20 @@ class AccountTests(unittest.TestCase):
                 con.execute('DELETE FROM certificates WHERE user_id=?',(user_id,))
                 con.execute('DELETE FROM users WHERE id=?',(user_id,))
 
+    def test_certificate_print_has_only_one_isolated_a4_sheet(self):
+        root=Path(__file__).parents[1]
+        css=(root/'dist'/'styles.css').read_text(encoding='utf-8')
+        account=(root/'dist'/'account.js').read_text(encoding='utf-8')
+        app=(root/'dist'/'app.js').read_text(encoding='utf-8')
+        self.assertIn('@page{size:A4 landscape;margin:0}',css)
+        self.assertIn('width:210mm!important;height:148.5mm!important',css)
+        self.assertIn('body.print-demo-certificate > :not(#certificatePrintRoot)',css)
+        self.assertIn('body.print-exam-certificate > :not(#examCertificatePrintRoot)',css)
+        self.assertIn("copy.removeAttribute('id')",account)
+        self.assertIn("copy.removeAttribute('id')",app)
+        self.assertIn('window.addEventListener(\'afterprint\'',account)
+        self.assertIn('window.addEventListener(\'afterprint\'',app)
+
     def test_registration_verification_login_reset_and_progress(self):
         backend = self.backend
         with patch.object(backend, 'send_mail') as send:
