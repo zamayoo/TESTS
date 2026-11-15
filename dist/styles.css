@@ -21,3 +21,22 @@
 .certificate-row small{display:block;color:#789197;margin-top:5px}
 .certificate-row strong{color:#0d5962}
 @media(max-width:700px){.account-area{padding:16px}.certificate-row{display:block}.account-heading{display:block}}
+
+/* Sample certificate: clearly distinct from actual exam achievements. */
+#demoCertificateSection{margin:22px 0 28px}
+.demo-certificate{margin:16px auto;padding:42px 34px;max-width:820px;background:linear-gradient(145deg,#fffefa,#f3f8f7);border:7px double #278c80;border-radius:10px;box-shadow:0 14px 35px #142b3419;text-align:center;position:relative;color:#193a43;overflow:hidden;min-height:450px}
+.demo-cert-top{display:flex;justify-content:center;align-items:center;gap:12px;font-size:22px;color:#137a72;letter-spacing:1px}
+.demo-cert-top span{font-size:10px;letter-spacing:2px;color:#667e83}
+.demo-cert-watermark{margin:27px auto 6px;font-size:12px;font-weight:800;letter-spacing:3px;color:#bd8c49}
+.demo-cert-title{font-family:Georgia,serif;font-size:clamp(32px,5vw,50px);letter-spacing:5px;margin:9px 0;color:#134d57}
+.demo-cert-subtitle{font-size:15px;color:#5e7d82}
+.demo-cert-name{font-family:Georgia,serif;font-size:clamp(24px,4vw,36px);margin:29px auto 18px;border-bottom:1px solid #b5c7c5;max-width:560px;padding-bottom:15px;overflow-wrap:anywhere}
+.demo-cert-description{max-width:630px;margin:0 auto 25px;font-size:12px;line-height:1.8;color:#627477}
+.demo-cert-bottom{display:flex;justify-content:space-between;gap:12px;font-size:12px;font-weight:700;border-top:1px solid #c6d3d1;padding-top:18px}
+.demo-cert-warning{margin-top:18px;color:#a06433;font-weight:800;letter-spacing:2px;font-size:11px}
+@media(max-width:600px){.demo-certificate{padding:26px 18px}.demo-cert-top{flex-wrap:wrap}.demo-cert-bottom{display:block}.demo-cert-bottom span{display:block;margin:5px}}
+@media print{
+ body.print-demo-certificate > *{visibility:hidden!important}
+ body.print-demo-certificate #demoCertificateCanvas,body.print-demo-certificate #demoCertificateCanvas *{visibility:visible!important}
+ body.print-demo-certificate #demoCertificateCanvas{position:fixed;top:5mm;left:5mm;width:calc(100% - 10mm);max-width:none;min-height:185mm;box-shadow:none;break-inside:avoid}
+}
