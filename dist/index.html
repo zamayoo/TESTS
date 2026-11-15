@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0b5558">
   <title>TESTS — навчальна платформа</title>
   <meta name="description" content="Навчання, тренувальні тести та сертифікація для професійного розвитку.">
-  <link rel="stylesheet" href="styles.css?v=27">
+  <link rel="stylesheet" href="styles.css?v=28">
 </head>
 <body>
 <a class="skip-link" href="#mainContent">Перейти до вмісту</a>
@@ -101,11 +101,38 @@
     </section>
 
 
-    <section id="settingsView" class="route-view" data-view="settings" hidden><header class="course-header"><div><p class="eyebrow">НАЛАШТУВАННЯ</p><h1>Озвучення та параметри</h1><p>Налаштуйте голос, темп мовлення та перевірте відтворення звуку. Параметри зберігаються для всіх навчальних питань.</p></div></header>      <details class="voice-settings"><summary><span class="summary-icon">◖))</span><span><strong>Озвучення запитань</strong><small id="ttsStatus" aria-live="polite">Жіночий український голос Тетяна. Натисніть «Перевірити звук».</small></span><span class="summary-open">Налаштувати</span></summary><div class="voice-settings-body"><label>Режим <select id="ttsMode"><option value="server">Тетяна · природний жіночий голос (Piper)</option><option value="browser">Голос пристрою</option><option value="neural">Резервна локальна MMS</option></select></label><label id="voiceWrap" hidden>Голос <select id="voiceSelect"></select></label><label>Темп <select id="ttsRate"><option value="0.9">Спокійно</option><option value="1">Звичайно</option><option value="1.12">Швидше</option></select></label><button id="testSound" class="small-btn" type="button">Перевірити звук</button><div class="audio-replay" id="audioReplay" hidden><strong>Аудіозапис готовий:</strong><audio id="lastAudio" controls preload="auto"></audio><a id="downloadAudio" class="small-btn" download="test-question-uk.wav">↓ Завантажити WAV</a><small>Якщо автоматичне відтворення заблоковано, натисніть Play у плеєрі.</small></div></div></details></section>
+    <section id="settingsView" class="route-view" data-view="settings" hidden><header class="course-header"><div><p class="eyebrow">НАЛАШТУВАННЯ</p><h1>Налаштування платформи</h1><p>Персоналізуйте вигляд, читання та навчання. Зміни застосовуються одразу й зберігаються у цьому браузері.</p></div></header>      <details class="voice-settings"><summary><span class="summary-icon">◖))</span><span><strong>Озвучення запитань</strong><small id="ttsStatus" aria-live="polite">Жіночий український голос Тетяна. Натисніть «Перевірити звук».</small></span><span class="summary-open">Налаштувати</span></summary><div class="voice-settings-body"><label>Режим <select id="ttsMode"><option value="server">Тетяна · природний жіночий голос (Piper)</option><option value="browser">Голос пристрою</option><option value="neural">Резервна локальна MMS</option></select></label><label id="voiceWrap" hidden>Голос <select id="voiceSelect"></select></label><label>Темп <select id="ttsRate"><option value="0.9">Спокійно</option><option value="1">Звичайно</option><option value="1.12">Швидше</option></select></label><button id="testSound" class="small-btn" type="button">Перевірити звук</button><div class="audio-replay" id="audioReplay" hidden><strong>Аудіозапис готовий:</strong><audio id="lastAudio" controls preload="auto"></audio><a id="downloadAudio" class="small-btn" download="test-question-uk.wav">↓ Завантажити WAV</a><small>Якщо автоматичне відтворення заблоковано, натисніть Play у плеєрі.</small></div></div></details>
+      <div class="settings-grid">
+        <section class="settings-card" aria-labelledby="settingsAppearanceTitle">
+          <div class="settings-card-title"><span class="settings-icon" aria-hidden="true">◐</span><div><h2 id="settingsAppearanceTitle">Зовнішній вигляд</h2><p>Оберіть тему та щільність інтерфейсу.</p></div></div>
+          <div class="settings-field"><label for="prefTheme">Колірна тема</label><select id="prefTheme"><option value="system">Як у системі</option><option value="light">Світла</option><option value="dark">Темна</option></select></div>
+          <div class="settings-field"><label for="prefDensity">Відступи та розмір карток</label><select id="prefDensity"><option value="comfortable">Комфортно</option><option value="compact">Компактно</option></select></div>
+          <label class="settings-toggle"><span><strong>Підвищений контраст</strong><small>Чіткіші межі та сильніший контраст тексту</small></span><input id="prefContrast" type="checkbox"></label>
+        </section>
+        <section class="settings-card" aria-labelledby="settingsReadingTitle">
+          <div class="settings-card-title"><span class="settings-icon" aria-hidden="true">Aa</span><div><h2 id="settingsReadingTitle">Читання і доступність</h2><p>Зробіть довгі питання зручнішими для сприйняття.</p></div></div>
+          <div class="settings-field"><label for="prefFont">Розмір тексту <output id="prefFontValue" for="prefFont">100%</output></label><input id="prefFont" type="range" min="85" max="150" value="100" step="5"></div>
+          <label class="settings-toggle"><span><strong>Менше анімації</strong><small>Вимкнути плавні переміщення та ефекти</small></span><input id="prefMotion" type="checkbox"></label>
+          <label class="settings-toggle"><span><strong>Показувати прогрес тем</strong><small>Індикатори виконання в лівому меню</small></span><input id="prefProgress" type="checkbox" checked></label>
+        </section>
+        <section class="settings-card" aria-labelledby="settingsLearningTitle">
+          <div class="settings-card-title"><span class="settings-icon" aria-hidden="true">▤</span><div><h2 id="settingsLearningTitle">Навчання</h2><p>Налаштуйте поведінку тренувального середовища.</p></div></div>
+          <label class="settings-toggle"><span><strong>Запам’ятовувати останню тему</strong><small>Повертатися до вибраного розділу після відкриття платформи</small></span><input id="prefRememberTopic" type="checkbox" checked></label>
+          <label class="settings-toggle"><span><strong>Перехід після правильної відповіді</strong><small>Автоматично відкривати наступне питання через 1,5 секунди</small></span><input id="prefAutoNext" type="checkbox"></label>
+          <p class="settings-small-note">Зміна цих параметрів не видаляє відповіді чи сертифікати.</p>
+        </section>
+        <section class="settings-card settings-summary" aria-labelledby="settingsInfoTitle">
+          <div class="settings-card-title"><span class="settings-icon" aria-hidden="true">ⓘ</span><div><h2 id="settingsInfoTitle">Збереження параметрів</h2><p>Ці налаштування зберігаються локально у браузері.</p></div></div>
+          <p>Результати навчання та сертифікати зберігаються окремо. Параметри оформлення можуть відрізнятися між пристроями.</p>
+          <button id="prefReset" type="button" class="settings-reset">Відновити стандартні налаштування</button>
+          <p id="prefNotice" class="settings-notice" role="status" aria-live="polite"></p>
+        </section>
+      </div>
+    </section>
     <footer class="site-footer"><span>TESTS · незалежна навчальна платформа</span><a href="/privacy.html">Політика конфіденційності</a></footer>
   </main>
 </div>
 <script src="account.js?v=12" defer></script>
-<script src="app.js?v=12" defer></script>
+<script src="app.js?v=13" defer></script>
 </body>
 </html>
