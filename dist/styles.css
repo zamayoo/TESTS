@@ -225,3 +225,38 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 #settingsView #testSound{grid-column:1/-1;width:fit-content;min-width:180px;background:#09666b;border-color:#09666b;color:white;text-align:center}
 #settingsView .audio-replay{grid-column:1/-1}
 @media(max-width:760px){#accountView .account-data-tools .sidebar-bottom{display:grid;grid-template-columns:1fr}.account-data-tools .sidebar-bottom{display:grid!important}#settingsView .voice-settings-body{grid-template-columns:1fr}}
+
+
+/* Scannable certificate verification and deterministic, single-page print layout. */
+.demo-cert-matrix img{display:block;width:104px;height:104px;max-width:100%;background:#fff;padding:3px;border:1px solid #bdd4cf;image-rendering:auto}
+.demo-cert-matrix a{display:inline-block;color:#0c6864;text-decoration:none}
+#certificatePrintRoot{display:none}
+@page{size:A4 landscape;margin:0}
+@media print{
+  body.print-demo-certificate{margin:0!important;background:#fff!important;padding:0!important}
+  body.print-demo-certificate > :not(#certificatePrintRoot){display:none!important}
+  body.print-demo-certificate #certificatePrintRoot,
+  body.print-demo-certificate #certificatePrintRoot *{visibility:visible!important}
+  body.print-demo-certificate #certificatePrintRoot{
+    display:flex!important;position:static!important;overflow:hidden!important;
+    box-sizing:border-box!important;width:297mm!important;height:210mm!important;
+    padding:0!important;margin:0!important;align-items:center!important;justify-content:center!important;
+    page-break-after:avoid!important;break-after:avoid!important
+  }
+  body.print-demo-certificate #certificatePrintRoot>.demo-certificate{
+    position:relative!important;inset:auto!important;flex:none!important;
+    width:210mm!important;height:148.5mm!important;max-width:none!important;
+    min-height:0!important;max-height:none!important;aspect-ratio:1.414!important;
+    box-sizing:border-box!important;margin:0!important;padding:7mm 10mm 5mm!important;
+    box-shadow:none!important;overflow:hidden!important;border-radius:1mm!important;
+    page:auto!important;break-inside:avoid!important;
+    print-color-adjust:exact!important;-webkit-print-color-adjust:exact!important;
+  }
+  body.print-demo-certificate #certificatePrintRoot .demo-cert-title{font-size:38px!important}
+  body.print-demo-certificate #certificatePrintRoot .demo-cert-recipient>strong{font-size:28px!important}
+  body.print-demo-certificate #certificatePrintRoot .demo-cert-header{padding-right:0!important}
+  body.print-demo-certificate #certificatePrintRoot .demo-cert-rosette{width:106px!important;height:106px!important}
+  body.print-demo-certificate #certificatePrintRoot .demo-cert-matrix img{width:86px!important;height:86px!important}
+  body.print-demo-certificate #certificatePrintRoot .demo-cert-footer{gap:10px!important}
+  body.print-demo-certificate #certificatePrintRoot .demo-cert-security-field{z-index:0!important}
+}
