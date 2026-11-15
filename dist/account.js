@@ -31,6 +31,20 @@ window.testsAccount = (() => {
     const certificates=user.certificates||[];
     el('accountStats').innerHTML=`<div class="stat"><div><small>ОПРАЦЬОВАНО</small><strong>${taken.length}</strong></div></div><div class="stat"><div><small>ПРАВИЛЬНИХ</small><strong>${correct}</strong></div></div><div class="stat"><div><small>ТОЧНІСТЬ</small><strong>${taken.length?Math.round(correct/taken.length*100):0}%</strong></div></div><div class="stat"><div><small>ТЕСТУВАНЬ</small><strong>${certificates.length}</strong></div></div>`;
     el('accountCertificates').innerHTML=certificates.length?certificates.map(c=>`<div class="certificate-row"><span>${safe(c.name)}<small>${new Date(c.created_at*1000).toLocaleDateString('uk-UA')}</small></span><strong>${c.score} балів · ${c.passed?'Успішно':'Не пройдено'}</strong></div>`).join(''):'<p>Ще немає результатів сертифікаційного тестування.</p>';
+
+    const demo=user.demo_certificates?.[0];
+    el('demoCertificateSection').hidden=!demo;
+    if(demo){
+      const issued=new Date(demo.created_at*1000).toLocaleDateString('uk-UA');
+      el('demoCertificateCanvas').innerHTML=`<div class="demo-cert-top">◈ <strong>TESTS</strong><span>НАВЧАЛЬНА ПЛАТФОРМА</span></div>
+        <div class="demo-cert-watermark">ДЕМОНСТРАЦІЙНИЙ ЗРАЗОК</div>
+        <div class="demo-cert-title">СЕРТИФІКАТ</div>
+        <div class="demo-cert-subtitle">ознайомлення з навчальною платформою</div>
+        <div class="demo-cert-name">${safe(user.name||user.email)}</div>
+        <p class="demo-cert-description">Цей зразок демонструє оформлення персональних сертифікатів у TESTS.<br>Не підтверджує проходження іспиту, результати тестування чи професійну кваліфікацію.</p>
+        <div class="demo-cert-bottom"><span>Номер: ${safe(demo.code)}</span><span>Дата: ${issued}</span></div>
+        <div class="demo-cert-warning">ДЕМО · НЕОФІЦІЙНИЙ ДОКУМЕНТ</div>`;
+    }
   }
   async function refresh() {
     try { user=await api('me'); render(); if(user.progress&&onProgressLoaded)onProgressLoaded(user.progress); }
@@ -55,6 +69,11 @@ window.testsAccount = (() => {
     el('showLogin').onclick=()=>mode('login');
     el('showRegister').onclick=()=>mode('register');
     el('showForgot').onclick=()=>mode('forgot');
+    el('printDemoCertificate').onclick=()=>{
+      document.body.classList.add('print-demo-certificate');
+      window.print();
+    };
+    window.addEventListener('afterprint',()=>document.body.classList.remove('print-demo-certificate'));
     el('accountLogout').onclick=async()=>{try{await api('logout',{method:'POST'});user=null;render();el('authNotice').textContent='Ви вийшли з кабінету.';}catch(e){el('authNotice').textContent=e.message}};
     const params=new URLSearchParams(location.search);
     if(params.has('reset')){mode('reset'); el('authEmail').closest('label').hidden=true;show();}
