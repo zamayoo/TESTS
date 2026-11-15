@@ -165,6 +165,26 @@ class AccountTests(unittest.TestCase):
 
 
 class InterfaceStructureTests(unittest.TestCase):
+    def test_settings_workspace_and_preferences_are_isolated(self):
+        root = Path(__file__).parents[1]
+        html = (root / 'dist' / 'index.html').read_text(encoding='utf-8')
+        js = (root / 'dist' / 'app.js').read_text(encoding='utf-8')
+        css = (root / 'dist' / 'styles.css').read_text(encoding='utf-8')
+        for control in ('prefTheme','prefDensity','prefContrast','prefFont',
+                        'prefMotion','prefProgress','prefRememberTopic','prefAutoNext','prefReset'):
+            self.assertEqual(html.count('id="'+control+'"'), 1)
+        self.assertIn('data-view="settings"', html)
+        self.assertIn("PREFS_KEY='tests-ui-preferences-v1'", js)
+        self.assertIn("localStorage.setItem(PREFS_KEY", js)
+        self.assertIn("function applyPrefs()", js)
+        self.assertIn("function setupPreferences()", js)
+        self.assertIn("if(prefs.autoNext", js)
+        self.assertIn('html[data-theme="dark"]', css)
+        self.assertIn('html[data-density="compact"]', css)
+        self.assertIn('html[data-motion="reduced"]', css)
+        self.assertIn('html[data-show-progress="no"]', css)
+        self.assertIn('Відновити стандартні налаштування', html)
+
     def test_spa_views_and_navigation_are_separate(self):
         root = Path(__file__).parents[1]
         html = (root / 'dist' / 'index.html').read_text(encoding='utf-8')
