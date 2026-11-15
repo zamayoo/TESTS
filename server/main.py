@@ -292,14 +292,19 @@ def me(request: Request):
     with db() as con:
         row = con.execute('SELECT payload FROM progress WHERE user_id=?', (user['id'],)).fetchone()
         certificates = [dict(x) for x in con.execute('SELECT * FROM certificates WHERE user_id=? ORDER BY created_at DESC', (user['id'],)).fetchall()]
-        # This non-official sample belongs to one explicit account, independently
-        # of row order in an existing production database. Reclaim the fixed demo
-        # code from the former id=1 implementation before inserting it here.
+        # A demo document is not an exam result. Give the designated account its
+        # own unguessable, stable code; migrate the former public demo number.
         if DEMO_CERTIFICATE_EMAIL and hmac.compare_digest(user['email'].lower(), DEMO_CERTIFICATE_EMAIL):
             con.execute('DELETE FROM demo_certificates WHERE code=? AND user_id<>?',
                         ('DEMO-TESTS-0001', user['id']))
-            con.execute('INSERT OR IGNORE INTO demo_certificates (user_id, code, created_at) VALUES (?,?,?)',
-                        (user['id'], 'DEMO-TESTS-0001', now()))
+            existing=con.execute('SELECT code FROM demo_certificates WHERE user_id=?',
+                                 (user['id'],)).fetchone()
+            if not existing:
+                con.execute('INSERT INTO demo_certificates (user_id,code,created_at) VALUES (?,?,?)',
+                            (user['id'], 'DEMO-'+secrets.token_hex(12).upper(), now()))
+            elif existing['code']=='DEMO-TESTS-0001':
+                con.execute('UPDATE demo_certificates SET code=? WHERE user_id=?',
+                            ('DEMO-'+secrets.token_hex(12).upper(), user['id']))
         else:
             con.execute('DELETE FROM demo_certificates WHERE user_id=? AND code=?',
                         (user['id'], 'DEMO-TESTS-0001'))
@@ -453,7 +458,7 @@ async def google_callback(request: Request, code: str, state: str):
 # Public, read-only verification deliberately exposes no email, session, or progress data.
 # Real certificate ids are 128-bit random tokens; demo code is explicitly non-qualifying.
 def certificate_record(identifier: str):
-    if not re.fullmatch(r'[0-9a-f]{32}|DEMO-TESTS-[0-9]{4}', identifier):
+    if not re.fullmatch(r'[0-9a-f]{32}|DEMO-[A-F0-9]{24}', identifier):
         raise HTTPException(404, 'Документ не знайдено.')
     with db() as con:
         if identifier.startswith('DEMO-'):
@@ -461,7 +466,7 @@ def certificate_record(identifier: str):
                 FROM demo_certificates d JOIN users u ON u.id=d.user_id
                 WHERE d.code=?''',(identifier,)).fetchone()
             if not row:raise HTTPException(404, 'Документ не знайдено.')
-            return {'id':row['id'],'type':'demo','status':'sample','name':'Демонстраційний зразок',
+            return {'id':row['id'],'type':'demo','status':'sample','name':row['name'],
                     'created_at':row['created_at'],'passed':False,
                     'official':False,'message':'Демонстраційний зразок. Не підтверджує складання іспиту або кваліфікацію.'}
         row=con.execute('''SELECT id,name,score,correct,passed,created_at
