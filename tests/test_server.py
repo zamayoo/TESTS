@@ -49,6 +49,13 @@ class AccountTests(unittest.TestCase):
                 con.execute('DELETE FROM sessions')
                 con.execute('DELETE FROM users')
 
+    def test_demo_certificate_keeps_disclaimer_and_security_layers(self):
+        source = (Path(__file__).parents[1] / 'dist' / 'account.js').read_text(encoding='utf-8')
+        self.assertGreaterEqual(source.count('data-security-layer='), 10)
+        self.assertIn('НЕОФІЦІЙНИЙ ДЕМОНСТРАЦІЙНИЙ ДОКУМЕНТ', source)
+        self.assertIn('НЕ Є QR-КОДОМ', source)
+        self.assertIn('не має юридичної сили', source)
+
     def test_registration_verification_login_reset_and_progress(self):
         backend = self.backend
         with patch.object(backend, 'send_mail') as send:
