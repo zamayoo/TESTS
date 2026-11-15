@@ -4,6 +4,8 @@ import base64
 import hashlib
 import hmac
 import json
+import io
+import re
 import os
 import secrets
 import smtplib
@@ -18,6 +20,8 @@ from pathlib import Path
 from urllib.parse import urlencode
 
 import httpx
+import qrcode
+from qrcode.image.svg import SvgPathImage
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
@@ -445,6 +449,83 @@ async def google_callback(request: Request, code: str, state: str):
     signed.headers['location'] = '/?auth=google'
     signed.delete_cookie('google_oauth_state')
     return signed
+
+
+# Public, read-only verification deliberately exposes no email, session, or progress data.
+# Real certificate ids are 128-bit random tokens; demo code is explicitly non-qualifying.
+def certificate_record(identifier: str):
+    if not re.fullmatch(r'[0-9a-f]{32}|DEMO-TESTS-[0-9]{4}', identifier):
+        raise HTTPException(404, 'Документ не знайдено.')
+    with db() as con:
+        if identifier.startswith('DEMO-'):
+            row=con.execute('''SELECT d.code AS id,d.created_at,u.display_name AS name
+                FROM demo_certificates d JOIN users u ON u.id=d.user_id
+                WHERE d.code=?''',(identifier,)).fetchone()
+            if not row:raise HTTPException(404, 'Документ не знайдено.')
+            return {'id':row['id'],'type':'demo','status':'sample','name':row['name'],
+                    'created_at':row['created_at'],'passed':False,
+                    'official':False,'message':'Демонстраційний зразок. Не підтверджує складання іспиту або кваліфікацію.'}
+        row=con.execute('''SELECT id,name,score,correct,passed,created_at
+            FROM certificates WHERE id=?''',(identifier,)).fetchone()
+    if not row:raise HTTPException(404,'Документ не знайдено.')
+    return {'id':row['id'],'type':'training_exam','status':'passed' if row['passed'] else 'not_passed',
+            'name':row['name'],'score':row['score'],'correct':row['correct'],
+            'total':40,'created_at':row['created_at'],'passed':bool(row['passed']),
+            'official':False,'message':'Результат навчального тестування TESTS. Не є офіційним документом НАДС.'}
+
+
+@app.get('/api/certificates/verify/{identifier}')
+def verify_certificate_api(identifier: str):
+    return certificate_record(identifier)
+
+
+@app.get('/api/certificates/qr/{identifier}')
+def certificate_qr(identifier: str):
+    certificate_record(identifier)  # Never display a valid-looking QR for an unregistered document.
+    destination=f'{SITE_URL}/verify/{identifier}'
+    qr=qrcode.QRCode(version=None,error_correction=qrcode.constants.ERROR_CORRECT_M,
+                     box_size=8,border=4)
+    qr.add_data(destination)
+    qr.make(fit=True)
+    image=qr.make_image(image_factory=SvgPathImage)
+    stream=io.BytesIO()
+    image.save(stream)
+    return Response(stream.getvalue(),media_type='image/svg+xml',
+                    headers={'Cache-Control':'private, max-age=300',
+                             'X-Content-Type-Options':'nosniff'})
+
+
+@app.get('/verify/{identifier}',response_class=Response)
+def verify_certificate_page(identifier: str):
+    from html import escape
+    from datetime import datetime, timezone
+    try:
+        record=certificate_record(identifier)
+    except HTTPException:
+        return Response('<!doctype html><html lang="uk"><meta charset="utf-8">'
+                        '<title>Документ не знайдено — TESTS</title><h1>Документ не знайдено</h1>'
+                        '<p>Номер відсутній у реєстрі TESTS.</p></html>',
+                        status_code=404,media_type='text/html; charset=utf-8')
+    sample=record['type']=='demo'
+    status='ДЕМОНСТРАЦІЙНИЙ ЗРАЗОК' if sample else ('ТЕСТУВАННЯ ПРОЙДЕНО' if record['passed'] else 'ТЕСТУВАННЯ НЕ ПРОЙДЕНО')
+    date=datetime.fromtimestamp(record['created_at'],tz=timezone.utc).strftime('%d.%m.%Y %H:%M UTC')
+    details='' if sample else f"<dt>Результат</dt><dd>{record['score']} зі 100; правильних відповідей: {record['correct']} із 40</dd>"
+    html=('<!doctype html><html lang="uk"><head><meta charset="utf-8">'
+          '<meta name="viewport" content="width=device-width,initial-scale=1">'
+          '<title>Перевірка документа — TESTS</title>'
+          '<style>body{font:16px/1.6 system-ui,sans-serif;background:#eff8f6;color:#163940;margin:0;padding:24px}'
+          'main{max-width:680px;margin:5vh auto;background:white;border:1px solid #cde3dc;border-radius:20px;padding:32px}'
+          'h1{color:#0b615f}dt{font-weight:700;margin-top:12px}dd{margin:2px 0 10px;overflow-wrap:anywhere}'
+          '.status{display:inline-block;background:#e4f5f1;padding:8px 14px;border-radius:20px;font-weight:800}'
+          '.notice{margin-top:24px;border-top:1px solid #dce9e6;padding-top:15px;color:#5d747b}'
+          'a{color:#087c73}</style></head><body><main><a href="/">TESTS · Навчальна платформа</a>'
+          '<h1>Перевірка документа</h1><p class="status">'+escape(status)+'</p><dl>'
+          '<dt>Номер у реєстрі</dt><dd>'+escape(record['id'])+'</dd>'
+          '<dt>Власник / учасник</dt><dd>'+escape(record['name'])+'</dd>'
+          '<dt>Дата реєстрації</dt><dd>'+escape(date)+'</dd>'+details+'</dl>'
+          '<p class="notice">'+escape(record['message'])+'</p></main></body></html>')
+    return Response(html,media_type='text/html; charset=utf-8',
+                    headers={'Cache-Control':'no-store','X-Robots-Tag':'noindex, nofollow'})
 
 
 @app.get('/api/health')
