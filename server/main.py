@@ -21,7 +21,6 @@ from urllib.parse import urlencode
 
 import httpx
 import qrcode
-from qrcode.image.svg import SvgPathImage
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
@@ -487,10 +486,10 @@ def certificate_qr(identifier: str):
                      box_size=8,border=4)
     qr.add_data(destination)
     qr.make(fit=True)
-    image=qr.make_image(image_factory=SvgPathImage)
+    image=qr.make_image(fill_color='black',back_color='white')
     stream=io.BytesIO()
-    image.save(stream)
-    return Response(stream.getvalue(),media_type='image/svg+xml',
+    image.save(stream,format='PNG')
+    return Response(stream.getvalue(),media_type='image/png',
                     headers={'Cache-Control':'private, max-age=300',
                              'X-Content-Type-Options':'nosniff'})
 
