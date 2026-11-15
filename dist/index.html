@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0b5558">
   <title>TESTS — навчальна платформа</title>
   <meta name="description" content="Навчання, тренувальні тести та сертифікація для професійного розвитку.">
-  <link rel="stylesheet" href="styles.css?v=25">
+  <link rel="stylesheet" href="styles.css?v=27">
 </head>
 <body>
 <a class="skip-link" href="#mainContent">Перейти до вмісту</a>
@@ -86,7 +86,7 @@
       <header class="course-header certification-header"><div><button class="back-link" type="button" data-route="catalog">← Каталог напрямів</button><p class="eyebrow">СЕРТИФІКАЦІЯ · ДЕРЖАВНА СЛУЖБА</p><h1>Перевірте готовність<br>у форматі іспиту</h1><p>Окремий простір для підсумкового тестування, результату та навчального сертифіката.</p></div><div class="exam-brief"><span>40</span><strong>випадкових питань</strong><small>Прохідний результат — 70 зі 100</small></div></header>
       <section id="examSetup" class="exam-box"><p class="eyebrow">ПЕРЕД ПОЧАТКОМ</p><h2>Сертифікаційне тестування</h2><p>В тесті потрібно відповісти на <strong>40 питань</strong> із загальної бази — <strong id="totalQuestionCount">869</strong>. Питання та варіанти відповідей подаються у випадковому порядку. Час не обмежено. Якщо набрано менше 70 балів, повторна спроба можлива через 15 днів.</p><div class="name-grid"><label>Прізвище українською<input id="surname" autocomplete="family-name" required placeholder="Прізвище"></label><label>Ім’я українською<input id="givenName" autocomplete="given-name" required placeholder="Ім’я"></label><label>По батькові українською<input id="patronymic" required placeholder="По батькові"></label></div><button id="startExam" class="primary" type="button">Розпочати тестування</button><p id="examSetupError" class="form-error" aria-live="polite"></p><p class="exam-note">Увійдіть до особистого кабінету перед тестуванням, щоб зберегти результат і сертифікат.</p></section>
       <section id="examActive" class="exam-box" hidden><div class="exam-top"><strong id="examPerson"></strong><span id="examProgress">Питання 1 із 40</span></div><div class="bar"><span id="examProgressBar"></span></div><h3 id="examQuestion"></h3><div id="examAnswers" class="answers"></div><div class="exam-buttons"><button id="examPrevious" class="secondary" type="button">← Попереднє</button><button id="examNext" class="primary" type="button">Наступне →</button><button id="examFinish" class="primary" type="button" hidden>Завершити тест</button></div><p class="exam-note">Відповіді можна змінювати до завершення. Результат буде розраховано наприкінці.</p></section>
-      <section id="examResult" class="exam-box" hidden><div id="certificate" class="certificate"><div class="certificate-ornament">◇</div><p class="certificate-kicker" id="certificateKind">ПІДСУМКОВИЙ СЕРТИФІКАТ</p><h2>Сертифікаційне тестування</h2><p>TESTS · навчальна перевірка знань</p><h3 id="resultPerson"></h3><div id="resultScore" class="certificate-score"></div><h3 id="resultVerdict"></h3><p id="resultDetails"></p><p id="resultDate"></p><p id="retakeInfo"></p><small>Навчальний документ. Не є офіційним документом НАДС і не підтверджує проходження державного конкурсу.</small></div><div class="exam-buttons"><button id="printCertificate" class="primary" type="button">Друкувати / зберегти PDF</button><button id="reviewMistakes" class="secondary" type="button">Переглянути помилки</button><button id="newExam" class="secondary" type="button">Нова спроба</button></div><div id="examReview" hidden></div></section>
+      <section id="examResult" class="exam-box" hidden><div id="certificate" class="certificate"><div class="certificate-ornament">◇</div><p class="certificate-kicker" id="certificateKind">ПІДСУМКОВИЙ СЕРТИФІКАТ</p><h2>Сертифікаційне тестування</h2><p>TESTS · навчальна перевірка знань</p><h3 id="resultPerson"></h3><div id="resultScore" class="certificate-score"></div><h3 id="resultVerdict"></h3><p id="resultDetails"></p><p id="resultDate"></p><p id="retakeInfo"></p><div id="examVerification" class="exam-verification" hidden></div><small>Навчальний документ. Не є офіційним документом НАДС і не підтверджує проходження державного конкурсу.</small></div><div class="exam-buttons"><button id="printCertificate" class="primary" type="button">Друкувати / зберегти PDF</button><button id="reviewMistakes" class="secondary" type="button">Переглянути помилки</button><button id="newExam" class="secondary" type="button">Нова спроба</button></div><div id="examReview" hidden></div></section>
     </section>
 
     <section id="accountView" class="route-view" data-view="account" hidden>
@@ -105,7 +105,7 @@
     <footer class="site-footer"><span>TESTS · незалежна навчальна платформа</span><a href="/privacy.html">Політика конфіденційності</a></footer>
   </main>
 </div>
-<script src="account.js?v=10" defer></script>
-<script src="app.js?v=11" defer></script>
+<script src="account.js?v=12" defer></script>
+<script src="app.js?v=12" defer></script>
 </body>
 </html>
