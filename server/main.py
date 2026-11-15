@@ -468,6 +468,7 @@ def certificate_record(identifier: str):
             if not row:raise HTTPException(404, 'Документ не знайдено.')
             return {'id':row['id'],'type':'demo','status':'sample','name':row['name'],
                     'created_at':row['created_at'],'passed':False,
+                    'program':'Підготовка до тестування на державну службу',
                     'official':False,'message':'Демонстраційний зразок. Не підтверджує складання іспиту або кваліфікацію.'}
         row=con.execute('''SELECT id,name,score,correct,passed,created_at
             FROM certificates WHERE id=?''',(identifier,)).fetchone()
@@ -475,6 +476,7 @@ def certificate_record(identifier: str):
     return {'id':row['id'],'type':'training_exam','status':'passed' if row['passed'] else 'not_passed',
             'name':row['name'],'score':row['score'],'correct':row['correct'],
             'total':40,'created_at':row['created_at'],'passed':bool(row['passed']),
+            'program':'Підготовка до тестування на державну службу',
             'official':False,'message':'Результат навчального тестування TESTS. Не є офіційним документом НАДС.'}
 
 
@@ -526,7 +528,8 @@ def verify_certificate_page(identifier: str):
           '<h1>Перевірка документа</h1><p class="status">'+escape(status)+'</p><dl>'
           '<dt>Номер у реєстрі</dt><dd>'+escape(record['id'])+'</dd>'
           '<dt>Власник / учасник</dt><dd>'+escape(record['name'])+'</dd>'
-          '<dt>Дата реєстрації</dt><dd>'+escape(date)+'</dd>'+details+'</dl>'
+          '<dt>Дата реєстрації</dt><dd>'+escape(date)+'</dd>'
+          '<dt>Навчальний напрям</dt><dd>'+escape(record['program'])+'</dd>'+details+'</dl>'
           '<p class="notice">'+escape(record['message'])+'</p></main></body></html>')
     return Response(html,media_type='text/html; charset=utf-8',
                     headers={'Cache-Control':'no-store','X-Robots-Tag':'noindex, nofollow'})
