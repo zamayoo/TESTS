@@ -43,6 +43,7 @@ window.testsAccount = (() => {
     el('profileBtn').textContent=user?'👤 '+(user.name||user.email):'👤 Особистий кабінет';
     if(!user)return;
     el('memberEmail').textContent=[user.name,user.email].filter(Boolean).join(' · ');
+    el('profileDisplayName').value=user.name||'';
     const answers=user.progress?.answers||{};
     const taken=Object.values(answers), correct=taken.filter(x=>x?.correct).length;
     const certificates=user.certificates||[];
@@ -135,6 +136,20 @@ window.testsAccount = (() => {
       window.print();
     };
     window.addEventListener('afterprint',()=>document.body.classList.remove('print-demo-certificate'));
+    el('profileEditForm').onsubmit=async(event)=>{
+      event.preventDefault();
+      const input=el('profileDisplayName'),notice=el('profileEditNotice');
+      const name=input.value.trim().replace(/\s+/g,' ');
+      if(!name){notice.textContent='Вкажіть ім’я.';return;}
+      const submit=el('profileEditForm').querySelector('button[type="submit"]');
+      submit.disabled=true;notice.textContent='Зберігаємо…';
+      try{
+        const result=await api('profile',{method:'PUT',body:JSON.stringify({name})});
+        user.name=result.name;render();
+        notice.textContent='Персональні дані оновлено.';
+      }catch(error){notice.textContent='Не вдалося оновити профіль: '+error.message;}
+      finally{submit.disabled=false;}
+    };
     el('accountLogout').onclick=async()=>{try{await api('logout',{method:'POST'});user=null;render();el('authNotice').textContent='Ви вийшли з кабінету.';}catch(e){el('authNotice').textContent=e.message}};
     const params=new URLSearchParams(location.search);
     if(params.has('reset')){mode('reset'); el('authEmail').closest('label').hidden=true;show();}
