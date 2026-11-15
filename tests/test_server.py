@@ -71,6 +71,11 @@ class AccountTests(unittest.TestCase):
             sample = self.client.get('/api/me').json()['demo_certificates']
             self.assertEqual(sample, [])
             self.assertEqual(self.client.get('/api/me').json()['certificates'], [])
+            self.assertEqual(self.client.put('/api/profile', json={'name':'Олег Замай'}).status_code, 200)
+            self.assertEqual(self.client.get('/api/me').json()['name'], 'Олег Замай')
+            self.assertEqual(self.client.put('/api/profile', json={'name':'  '}).status_code, 422)
+            self.assertEqual(self.client.put('/api/profile', json={'name':'Інше'},headers={'Origin':'https://evil.example'}).status_code, 403)
+
             progress = {'answers': {'legislation-1':{'correct': True}}}
             self.assertEqual(self.client.put('/api/progress',json={'payload':progress}).status_code,200)
             self.assertEqual(self.client.get('/api/me').json()['progress'],progress)
@@ -79,6 +84,18 @@ class AccountTests(unittest.TestCase):
             self.assertEqual(self.client.post('/api/reset',json={'token':reset_token,'password':'EvenLongerPassword99!'}).status_code,200)
             self.assertEqual(self.client.get('/api/me').status_code,401)
             self.assertEqual(self.client.post('/api/login',json={'email':'oleg@example.org','password':'EvenLongerPassword99!'}).status_code,200)
+
+    def test_spa_splits_learning_exam_and_profile(self):
+        html = (Path(__file__).parents[1] / 'dist' / 'index.html').read_text(encoding='utf-8')
+        js = (Path(__file__).parents[1] / 'dist' / 'app.js').read_text(encoding='utf-8')
+        for view in ('home', 'catalog', 'learning', 'certification', 'account'):
+            self.assertIn(f'id="view-{view}"', html)
+        self.assertLess(html.index('id="view-learning"'), html.index('id="view-certification"'))
+        self.assertLess(html.index('id="view-certification"'), html.index('id="view-account"'))
+        self.assertIn('window.testsNavigate=navigate', js)
+        self.assertIn("navigate('learning')", js)
+        self.assertIn('id="profileEditForm"', html)
+        self.assertIn('id="demoCertificateCanvas"', html)
 
     def test_z_exam_is_scored_on_server(self):
         backend = self.backend
