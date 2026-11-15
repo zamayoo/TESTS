@@ -6,6 +6,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
+from starlette.requests import Request
 
 
 class AccountTests(unittest.TestCase):
@@ -22,6 +23,32 @@ class AccountTests(unittest.TestCase):
         cls.client.close()
         cls.tmp.cleanup()
 
+    def test_a_demo_certificate_follows_target_email_not_database_id(self):
+        backend = self.backend
+        session_token = 'target-demo-session'
+        with backend.db() as con:
+            con.execute("INSERT INTO users (id,email,display_name,verified,created_at) VALUES (1,'first@example.org','Перший',1,?)", (backend.now(),))
+            con.execute("INSERT INTO users (id,email,display_name,verified,created_at) VALUES (2,'zamayoo@gmail.com','Oleg Zamay',1,?)", (backend.now(),))
+            con.execute('INSERT INTO sessions VALUES (?,?,?)',
+                        (backend.token_hash(session_token), 2, backend.now() + 3600))
+            con.execute('INSERT INTO demo_certificates VALUES (?,?,?)',
+                        (1, 'DEMO-TESTS-0001', backend.now()))
+        try:
+            request = Request({'type': 'http', 'method': 'GET', 'path': '/api/me',
+                               'headers': [(b'cookie', f'tests_session={session_token}'.encode())]})
+            sample = backend.me(request)['demo_certificates']
+            self.assertEqual(len(sample), 1)
+            self.assertEqual(sample[0]['code'], 'DEMO-TESTS-0001')
+            with backend.db() as con:
+                owner = con.execute('SELECT user_id FROM demo_certificates WHERE code=?',
+                                    ('DEMO-TESTS-0001',)).fetchone()
+            self.assertEqual(owner['user_id'], 2)
+        finally:
+            with backend.db() as con:
+                con.execute('DELETE FROM demo_certificates')
+                con.execute('DELETE FROM sessions')
+                con.execute('DELETE FROM users')
+
     def test_registration_verification_login_reset_and_progress(self):
         backend = self.backend
         with patch.object(backend, 'send_mail') as send:
@@ -35,8 +62,7 @@ class AccountTests(unittest.TestCase):
             self.assertEqual(login.status_code, 200, login.text)
             self.assertEqual(self.client.get('/api/me').json()['email'], 'oleg@example.org')
             sample = self.client.get('/api/me').json()['demo_certificates']
-            self.assertEqual(len(sample), 1)
-            self.assertEqual(sample[0]['code'], 'DEMO-TESTS-0001')
+            self.assertEqual(sample, [])
             self.assertEqual(self.client.get('/api/me').json()['certificates'], [])
             progress = {'answers': {'legislation-1':{'correct': True}}}
             self.assertEqual(self.client.put('/api/progress',json={'payload':progress}).status_code,200)

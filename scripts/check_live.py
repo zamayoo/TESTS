@@ -61,7 +61,13 @@ def deployment_ready():
         local_bytes = (ROOT / "dist" / path).read_bytes()
         if hashlib.sha256(remote).digest() != hashlib.sha256(local_bytes).digest():
             raise RuntimeError(path + " differs from checked-out main (deployment or cache lag)")
-    return "Homepage and JS/privacy assets match GitHub main"
+    code, _, body = fetch("/api/health?monitor=" + os.environ.get("GITHUB_SHA", "latest"))
+    if code != 200:
+        raise RuntimeError("Health endpoint HTTP " + str(code))
+    health = json.loads(body)
+    if health.get("demo_certificate_policy") != "email-v2":
+        raise RuntimeError("Backend does not include the email-bound demo certificate fix")
+    return "Homepage, assets and email-bound demo certificate backend match GitHub main"
 
 def require_json(path, status_expected=200):
     status, _, body = fetch(path)
@@ -73,7 +79,9 @@ def check_api():
     obj = require_json("/api/health")
     if obj.get("ok") is not True:
         raise RuntimeError("API health is not OK")
-    return "/api/health OK"
+    if obj.get("demo_certificate_policy") != "email-v2":
+        raise RuntimeError("Demo certificate backend policy is stale")
+    return "/api/health OK with email-bound demo certificate policy"
 
 def check_voice_status():
     obj = require_json("/api/voice/status")

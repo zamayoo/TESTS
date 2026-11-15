@@ -27,6 +27,7 @@ BASE = Path(__file__).resolve().parent.parent
 DB_PATH = Path(os.getenv('DATA_PATH', '/data/tests.db'))
 SITE_URL = os.getenv('PUBLIC_URL', 'https://tests.finoraledger.com').rstrip('/')
 COOKIE_SECURE = os.getenv('COOKIE_SECURE', 'true').lower() == 'true'
+DEMO_CERTIFICATE_EMAIL = os.getenv('DEMO_CERTIFICATE_EMAIL', 'zamayoo@gmail.com').strip().lower()
 SESSION_DAYS = 30
 MAX_BODY = 160_000
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
@@ -284,11 +285,17 @@ def me(request: Request):
     with db() as con:
         row = con.execute('SELECT payload FROM progress WHERE user_id=?', (user['id'],)).fetchone()
         certificates = [dict(x) for x in con.execute('SELECT * FROM certificates WHERE user_id=? ORDER BY created_at DESC', (user['id'],)).fetchall()]
-        # One sample certificate for the primary (first-registered) developer account.
-        # Kept separate from actual exam results to avoid fabricated qualification claims.
-        if user['id'] == 1:
+        # This non-official sample belongs to one explicit account, independently
+        # of row order in an existing production database. Reclaim the fixed demo
+        # code from the former id=1 implementation before inserting it here.
+        if DEMO_CERTIFICATE_EMAIL and hmac.compare_digest(user['email'].lower(), DEMO_CERTIFICATE_EMAIL):
+            con.execute('DELETE FROM demo_certificates WHERE code=? AND user_id<>?',
+                        ('DEMO-TESTS-0001', user['id']))
             con.execute('INSERT OR IGNORE INTO demo_certificates (user_id, code, created_at) VALUES (?,?,?)',
                         (user['id'], 'DEMO-TESTS-0001', now()))
+        else:
+            con.execute('DELETE FROM demo_certificates WHERE user_id=? AND code=?',
+                        (user['id'], 'DEMO-TESTS-0001'))
         samples = [dict(x) for x in con.execute(
             'SELECT code,created_at FROM demo_certificates WHERE user_id=?', (user['id'],)
         ).fetchall()]
@@ -426,7 +433,7 @@ async def google_callback(request: Request, code: str, state: str):
 
 @app.get('/api/health')
 def health():
-    return {'ok': True}
+    return {'ok': True, 'demo_certificate_policy': 'email-v2'}
 
 
 app.mount('/assets', StaticFiles(directory=str(BASE / 'dist')), name='assets')
