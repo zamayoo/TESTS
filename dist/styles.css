@@ -260,3 +260,30 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
   body.print-demo-certificate #certificatePrintRoot .demo-cert-footer{gap:10px!important}
   body.print-demo-certificate #certificatePrintRoot .demo-cert-security-field{z-index:0!important}
 }
+
+
+.exam-verification{margin:22px auto;display:flex;justify-content:center;align-items:center;gap:14px;border-top:1px solid #c6dcd6;padding:16px;color:#15595c}
+.exam-verification[hidden]{display:none!important}
+.exam-verification img{width:100px;height:100px;max-width:none;padding:3px;border:1px solid #c5d7d3;background:#fff}
+.exam-verification div{display:grid;gap:6px;text-align:left}
+.exam-verification small{color:#5b787b;word-break:break-word}
+#examCertificatePrintRoot{display:none}
+@media print{
+ body.print-exam-certificate > :not(#examCertificatePrintRoot){display:none!important}
+ body.print-exam-certificate #examCertificatePrintRoot,
+ body.print-exam-certificate #examCertificatePrintRoot *{visibility:visible!important}
+ body.print-exam-certificate #examCertificatePrintRoot{
+  display:flex!important;position:static!important;width:297mm!important;height:210mm!important;
+  align-items:center!important;justify-content:center!important;overflow:hidden!important;
+  box-sizing:border-box!important;margin:0!important;padding:0!important;break-after:avoid!important
+ }
+ body.print-exam-certificate #examCertificatePrintRoot>.certificate{
+  position:relative!important;top:auto!important;left:auto!important;width:210mm!important;
+  height:148.5mm!important;max-width:none!important;min-height:0!important;
+  margin:0!important;box-sizing:border-box!important;padding:8mm 14mm!important;
+  overflow:hidden!important;box-shadow:none!important;break-inside:avoid!important;
+  print-color-adjust:exact!important;-webkit-print-color-adjust:exact!important
+ }
+ body.print-exam-certificate #examCertificatePrintRoot .exam-verification{margin:5mm auto 0;padding:3mm 0}
+ body.print-exam-certificate #examCertificatePrintRoot .exam-verification img{width:22mm!important;height:22mm!important}
+}
