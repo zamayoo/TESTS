@@ -180,7 +180,7 @@ function initializeExam(){let count=items.filter(q=>!q.missing).length;$('totalQ
 }}
 
 // Separate, addressable SPA workspaces, while preserving existing quiz and exam engines.
-function navigate(view,{scroll=true}={}){
+function navigate(view,{scroll=true,record=true}={}){
  const pages=['home','catalog','learning','certification','account'];
  if(!pages.includes(view))view='home';
  document.querySelectorAll('.spa-view').forEach(node=>node.hidden=node.id!=='view-'+view);
@@ -190,14 +190,15 @@ function navigate(view,{scroll=true}={}){
  if(view==='certification')setMode('exam');
  if(scroll)window.scrollTo({top:0,behavior:'instant'});
  const url=new URL(location.href);url.searchParams.set('view',view);
- history.replaceState(history.state,'',url.pathname+url.search+url.hash);
+ if(record && new URLSearchParams(location.search).get('view')!==view)history.pushState({view},'',url.pathname+url.search+url.hash);
+ else if(record)history.replaceState({view},'',url.pathname+url.search+url.hash);
 }
 window.testsNavigate=navigate;
 function installNavigation(){
  document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>navigate(button.dataset.view)));
  const route=new URLSearchParams(location.search).get('view')||'home';
- navigate(route,{scroll:false});
- window.addEventListener('popstate',()=>navigate(new URLSearchParams(location.search).get('view')||'home',{scroll:false}));
+ navigate(route,{scroll:false,record:false});
+ window.addEventListener('popstate',()=>navigate(new URLSearchParams(location.search).get('view')||'home',{scroll:false,record:false}));
 }
 
 async function init(){let response=await fetch('questions.json');data=await response.json();items=data.questions;await window.testsAccount?.setup(serverProgress=>{state={...state,...serverProgress};try{localStorage.setItem(STORAGE,JSON.stringify(state))}catch{};render()});render();initializeExam();$('prevBtn').onclick=()=>shift(-1);$('nextBtn').onclick=()=>shift(1);$('speakBtn').onclick=speak;$('speechTop').onclick=speak;$('stopBtn').onclick=stop;$('copyBtn').onclick=copy;
