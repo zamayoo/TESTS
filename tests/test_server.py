@@ -53,8 +53,52 @@ class AccountTests(unittest.TestCase):
         source = (Path(__file__).parents[1] / 'dist' / 'account.js').read_text(encoding='utf-8')
         self.assertGreaterEqual(source.count('data-security-layer='), 10)
         self.assertIn('НЕОФІЦІЙНИЙ ДЕМОНСТРАЦІЙНИЙ ДОКУМЕНТ', source)
-        self.assertIn('НЕ Є QR-КОДОМ', source)
+        self.assertIn('СКАНУЙТЕ ДЛЯ', source)
+        self.assertIn('/api/certificates/qr/', source)
+        self.assertIn('certificatePrintRoot', source)
         self.assertIn('не має юридичної сили', source)
+
+    def test_certificate_verification_and_real_qr_svg(self):
+        backend=self.backend
+        # A demo certificate is an educational sample, never proof of qualification.
+        with backend.db() as con:
+            con.execute("INSERT INTO users (email,display_name,verified,created_at) VALUES (?,?,?,?)",
+                        ('qr-test@example.org','QR Test',1,backend.now()))
+            user_id=con.execute("SELECT id FROM users WHERE email='qr-test@example.org'").fetchone()['id']
+            con.execute('INSERT INTO demo_certificates VALUES (?,?,?)',
+                        (user_id,'DEMO-TESTS-2197',backend.now()))
+            real_id='1234567890abcdef1234567890abcdef'
+            con.execute('INSERT INTO certificates VALUES (?,?,?,?,?,?,?,?)',
+                        (real_id,user_id,'Тестовий Учень',80,32,1,backend.now(),None))
+        try:
+            demo=self.client.get('/api/certificates/verify/DEMO-TESTS-2197')
+            self.assertEqual(demo.status_code,200)
+            self.assertEqual(demo.json()['type'],'demo')
+            self.assertFalse(demo.json()['passed'])
+            self.assertFalse(demo.json()['official'])
+            real=self.client.get('/api/certificates/verify/'+real_id)
+            self.assertEqual(real.status_code,200)
+            self.assertEqual(real.json()['score'],80)
+            self.assertEqual(real.json()['correct'],32)
+            self.assertTrue(real.json()['passed'])
+            self.assertNotIn('email',real.json())
+            qr=self.client.get('/api/certificates/qr/'+real_id)
+            self.assertEqual(qr.status_code,200)
+            self.assertIn('image/svg+xml',qr.headers['content-type'])
+            self.assertIn(b'<svg',qr.content)
+            self.assertGreater(len(qr.content),100)
+            page=self.client.get('/verify/'+real_id)
+            self.assertEqual(page.status_code,200)
+            self.assertIn('Тестовий Учень',page.text)
+            self.assertIn('80 зі 100',page.text)
+            self.assertIn('не є офіційним',page.text.lower())
+            self.assertEqual(self.client.get('/verify/'+('0'*32)).status_code,404)
+            self.assertEqual(self.client.get('/api/certificates/qr/'+('0'*32)).status_code,404)
+        finally:
+            with backend.db() as con:
+                con.execute('DELETE FROM demo_certificates WHERE user_id=?',(user_id,))
+                con.execute('DELETE FROM certificates WHERE user_id=?',(user_id,))
+                con.execute('DELETE FROM users WHERE id=?',(user_id,))
 
     def test_registration_verification_login_reset_and_progress(self):
         backend = self.backend
