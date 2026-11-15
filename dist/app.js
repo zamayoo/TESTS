@@ -62,6 +62,70 @@ function navigate(route,{replace=false,focus=true}={}){
 window.testsNavigate=(route,options)=>navigate(route,options);
 try{state={...state,...JSON.parse(localStorage.getItem(STORAGE)||'{}')}}catch{}
 function save(){try{localStorage.setItem(STORAGE,JSON.stringify(state))}catch{};window.testsAccount?.sync(state)}
+// Preferences are intentionally separate from cloud learning progress and exam results.
+const PREFS_KEY='tests-ui-preferences-v1';
+const PREFS_DEFAULT={theme:'system',density:'comfortable',contrast:false,font:100,
+  motion:false,progress:true,rememberTopic:true,autoNext:false};
+function loadPrefs(){
+ try{
+  const v=JSON.parse(localStorage.getItem(PREFS_KEY)||'{}');
+  if(!v||typeof v!=='object'||Array.isArray(v))return {...PREFS_DEFAULT};
+  return {...PREFS_DEFAULT,
+   theme:['system','light','dark'].includes(v.theme)?v.theme:'system',
+   density:['comfortable','compact'].includes(v.density)?v.density:'comfortable',
+   contrast:v.contrast===true,font:Math.min(150,Math.max(85,Number(v.font)||100)),
+   motion:v.motion===true,progress:v.progress!==false,
+   rememberTopic:v.rememberTopic!==false,autoNext:v.autoNext===true};
+ }catch{return {...PREFS_DEFAULT}}
+}
+let prefs=loadPrefs();
+function applyPrefs(){
+ const root=document.documentElement;
+ root.dataset.theme=prefs.theme;
+ root.dataset.density=prefs.density;
+ root.dataset.contrast=prefs.contrast?'high':'normal';
+ root.dataset.motion=prefs.motion?'reduced':'normal';
+ root.dataset.showProgress=prefs.progress?'yes':'no';
+ root.style.setProperty('--scale',String(prefs.font/100));
+ if($('prefFontValue'))$('prefFontValue').textContent=prefs.font+'%';
+}
+function updatePref(key,value){
+ prefs[key]=value;
+ try{localStorage.setItem(PREFS_KEY,JSON.stringify(prefs))}catch{}
+ applyPrefs();
+ if($('prefNotice'))$('prefNotice').textContent='Параметри збережено у браузері.';
+}
+function setupPreferences(){
+ const fields={prefTheme:'theme',prefDensity:'density',prefContrast:'contrast',
+  prefFont:'font',prefMotion:'motion',prefProgress:'progress',
+  prefRememberTopic:'rememberTopic',prefAutoNext:'autoNext'};
+ for(const [id,key] of Object.entries(fields)){
+  const el=$(id);if(!el)throw Error('Немає елемента налаштувань '+id);
+  if(el.type==='checkbox')el.checked=!!prefs[key];
+  else el.value=String(prefs[key]);
+  el.addEventListener(el.type==='range'?'input':'change',()=>{
+    updatePref(key,el.type==='checkbox'?el.checked:el.type==='range'?Number(el.value):el.value);
+  });
+ }
+ $('prefReset').onclick=()=>{
+  prefs={...PREFS_DEFAULT};
+  try{localStorage.setItem(PREFS_KEY,JSON.stringify(prefs));localStorage.removeItem('tests-last-topic')}catch{}
+  setupPreferencesValues();applyPrefs();
+  $('prefNotice').textContent='Стандартні налаштування відновлено. Навчальний прогрес збережено.';
+ };
+ setupPreferencesValues();applyPrefs();
+}
+function setupPreferencesValues(){
+ const fields={prefTheme:'theme',prefDensity:'density',prefContrast:'contrast',
+  prefFont:'font',prefMotion:'motion',prefProgress:'progress',
+  prefRememberTopic:'rememberTopic',prefAutoNext:'autoNext'};
+ for(const [id,key] of Object.entries(fields)){const el=$(id);if(!el)continue;
+  if(el.type==='checkbox')el.checked=!!prefs[key];else el.value=String(prefs[key]);}
+}
+function rememberCurrentTopic(){
+ if(!prefs.rememberTopic)return;
+ try{localStorage.setItem('tests-last-topic',activeGroup)}catch{}
+}
 function safe(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function rnd(n){let x=(n*1664525+1013904223)>>>0;return ()=>{x=(x*1664525+1013904223)>>>0;return x/4294967296}}
 function short(s,max=230){s=String(s).replace(/^[-•\s]+/,'').trim();return s.length>max?s.slice(0,max).replace(/\s+\S*$/,'')+'…':s}
@@ -105,8 +169,8 @@ function currentList(){return items.filter(q=>{
 function getCurrent(){let list=currentList();if(active>=list.length)active=Math.max(0,list.length-1);return list[active]}
 function renderBlocks(){let groups=[{id:'all',title:'Усі питання'}].concat(data.groups);
  $('blocks').innerHTML=groups.map(g=>{let questions=items.filter(q=>g.id==='all'||q.group===g.id);let answered=questions.filter(q=>state.answers[q.id]).length;return `<button class="block ${activeGroup===g.id?'active':''}" data-group="${g.id}"><span class="block-ico">${icons[g.id]||'▤'}</span><span><strong>${safe(g.title)}</strong><small>${answered} / ${questions.filter(q=>!q.missing).length} опрацьовано</small><span class="block-progress"><span style="width:${questions.filter(q=>!q.missing).length?Math.round(answered/questions.filter(q=>!q.missing).length*100):0}%"></span></span></span></button>`}).join('');
- document.querySelectorAll('.block').forEach(b=>b.onclick=()=>{activeGroup=b.dataset.group;active=0;query='';filter='all';$('search').value='';$('filter').value='all';render();navigate('learning')});
- const cards=$('topicCards');if(cards){cards.innerHTML=groups.map(g=>{const questions=items.filter(q=>g.id==='all'||q.group===g.id&&!q.missing),done=questions.filter(q=>state.answers[q.id]).length,total=questions.length,percent=total?Math.round(done/total*100):0;return `<button class="topic-card ${activeGroup===g.id?'active':''}" data-topic="${safe(g.id)}" type="button"><span class="topic-card-icon">${icons[g.id]||'▤'}</span><span class="topic-card-copy"><strong>${safe(g.title)}</strong><small>${total} питань</small></span><span class="topic-ring" style="--pct:${percent}%">${percent}%</span><span class="topic-arrow">›</span></button>`}).join('');cards.querySelectorAll('[data-topic]').forEach(b=>b.onclick=()=>{activeGroup=b.dataset.topic;active=0;query='';filter='all';$('search').value='';$('filter').value='all';render();navigate('learning');$('questionCard').scrollIntoView({behavior:'smooth',block:'start'})})}
+ document.querySelectorAll('.block').forEach(b=>b.onclick=()=>{activeGroup=b.dataset.group;rememberCurrentTopic();active=0;query='';filter='all';$('search').value='';$('filter').value='all';render();navigate('learning')});
+ const cards=$('topicCards');if(cards){cards.innerHTML=groups.map(g=>{const questions=items.filter(q=>g.id==='all'||q.group===g.id&&!q.missing),done=questions.filter(q=>state.answers[q.id]).length,total=questions.length,percent=total?Math.round(done/total*100):0;return `<button class="topic-card ${activeGroup===g.id?'active':''}" data-topic="${safe(g.id)}" type="button"><span class="topic-card-icon">${icons[g.id]||'▤'}</span><span class="topic-card-copy"><strong>${safe(g.title)}</strong><small>${total} питань</small></span><span class="topic-ring" style="--pct:${percent}%">${percent}%</span><span class="topic-arrow">›</span></button>`}).join('');cards.querySelectorAll('[data-topic]').forEach(b=>b.onclick=()=>{activeGroup=b.dataset.topic;rememberCurrentTopic();active=0;query='';filter='all';$('search').value='';$('filter').value='all';render();navigate('learning');$('questionCard').scrollIntoView({behavior:'smooth',block:'start'})})}
 }
 function renderStats(){let present=items.filter(q=>!q.missing);let taken=present.filter(q=>state.answers[q.id]);let correct=taken.filter(q=>state.answers[q.id].correct);let wrong=taken.length-correct.length;
  const bits=[['ОПРАЦЬОВАНО',taken.length,'▤'],['ПРАВИЛЬНИХ',correct.length,'✓'],['ПОМИЛОК',wrong,'↺'],['ТОЧНІСТЬ',taken.length?Math.round(correct.length/taken.length*100)+'%':'0%','◎']];$('stats').innerHTML=bits.map(a=>`<div class="stat"><div><small>${a[0]}</small><strong>${a[1]}</strong></div><div class="stat-icon">${a[2]}</div></div>`).join('')}
@@ -131,7 +195,17 @@ function render(){renderBlocks();renderStats();let list=currentList(),q=getCurre
  $('sourceBtn').onclick=()=>toggle('sourcePanel',q.missing?'Відсутній початковий текст':q.answer);
 }
 function toggle(id,msg){let el=$(id);if(el.hidden){el.textContent=msg;el.hidden=false}else el.hidden=true}
-function answer(q,choice){let opt=makeQuiz(q);state.answers[q.id]={choice,correct:choice===opt.correct,at:new Date().toISOString()};save();render();if(!state.answers[q.id].correct)$('feedback').scrollIntoView({block:'nearest',behavior:'smooth'})}
+function answer(q,choice){
+ const opt=makeQuiz(q);
+ state.answers[q.id]={choice,correct:choice===opt.correct,at:new Date().toISOString()};
+ save();render();
+ if(!state.answers[q.id].correct){$('feedback').scrollIntoView({block:'nearest',behavior:'smooth'});return}
+ if(prefs.autoNext && appMode==='study' && document.body.dataset.route==='learning'){
+  const id=q.id;const position=active;
+  setTimeout(()=>{if(prefs.autoNext && appMode==='study' && document.body.dataset.route==='learning'
+   && active===position && getCurrent()?.id===id)shift(1)},1500);
+ }
+}
 function shift(n){let next=active+n;if(next>=0&&next<currentList().length){active=next;stop();render();window.scrollTo({top:document.querySelector('.workspace-head').offsetTop-30,behavior:'smooth'})}}
 let speechGeneration=0,playingAudio=null,playingSource=null,soundContext=null,neuralWorker=null,neuralWorkerReady=null,requestId=0,waiters=new Map(),lastBlobUrl=null;
 function setSpeechStatus(message){$('ttsStatus').textContent=message}
@@ -264,7 +338,12 @@ function initializeExam(){let count=items.filter(q=>!q.missing).length;$('totalQ
   }
 }}
 async function init(){
+ applyPrefs();
  let response=await fetch('questions.json');data=await response.json();items=data.questions;
+ if(prefs.rememberTopic){try{
+  const stored=localStorage.getItem('tests-last-topic');
+  if(stored==='all'||data.groups.some(g=>g.id===stored))activeGroup=stored;
+ }catch{}}
  await window.testsAccount?.setup(serverProgress=>{state={...state,...serverProgress};try{localStorage.setItem(STORAGE,JSON.stringify(state))}catch{};render()});
  render();initializeExam();
  $('catalogQuestionCount').textContent=items.filter(q=>!q.missing).length.toLocaleString('uk-UA');
@@ -286,7 +365,8 @@ async function init(){
  navigate(routeFromLocation(),{replace:true,focus:false});
  $('prevBtn').onclick=()=>shift(-1);$('nextBtn').onclick=()=>shift(1);$('speakBtn').onclick=speak;$('speechTop').onclick=speak;$('stopBtn').onclick=stop;$('copyBtn').onclick=copy;
  $('ttsMode').value=state.ttsMode||'server';$('voiceWrap').hidden=$('ttsMode').value!=='browser';$('ttsRate').value=String(state.ttsRate||.9);$('ttsMode').onchange=()=>{stop();state.ttsMode=$('ttsMode').value;$('voiceWrap').hidden=state.ttsMode!=='browser';save();setSpeechStatus(state.ttsMode==='server'?'Тетяна · жіночий український голос на сервері.':state.ttsMode==='neural'?'Резервна модель MMS завантажується в браузер.':'Виберіть один із голосів, доступних у браузері.')};$('ttsRate').onchange=()=>{state.ttsRate=Number($('ttsRate').value);save()};$('voiceSelect').onchange=()=>{state.ttsVoice=$('voiceSelect').value;save()};listVoices();if('speechSynthesis'in window)speechSynthesis.onvoiceschanged=listVoices;
- $('fontBtn').onclick=()=>{state.font=state.font>=1.36?1:Math.round((state.font+.12)*100)/100;document.documentElement.style.setProperty('--scale',state.font);save()};document.documentElement.style.setProperty('--scale',state.font||1);
+ $('fontBtn').onclick=()=>{updatePref('font',prefs.font>=150?100:Math.min(150,prefs.font+10));$('prefFont').value=String(prefs.font)};
+ setupPreferences();
  $('search').oninput=e=>{query=e.target.value;active=0;render()};$('filter').onchange=e=>{filter=e.target.value;active=0;render()};
  $('jumpBtn').onclick=()=>{let n=Number($('jumpInput').value),q=items.find(x=>x.number===n);if(q){activeGroup=q.group;filter='all';query='';$('search').value='';$('filter').value='all';active=items.filter(x=>x.group===activeGroup).findIndex(x=>x.number===n);render()}};
  $('exportBtn').onclick=()=>{let b=new Blob([JSON.stringify({format:'audit-trainer-progress-v1',state,exported:new Date().toISOString()},null,2)],{type:'application/json'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='audit-trainer-progress.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)};
