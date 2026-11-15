@@ -72,6 +72,8 @@ class AccountTests(unittest.TestCase):
             self.assertEqual(profile.status_code, 200, profile.text)
             self.assertEqual(profile.json()['name'], 'Олег Замай')
             self.assertEqual(self.client.get('/api/me').json()['name'], 'Олег Замай')
+            self.assertEqual(self.client.put('/api/profile', json={'name':'  '}).status_code, 422)
+            self.assertEqual(self.client.put('/api/profile', json={'name':'Інше'}, headers={'Origin':'https://evil.example'}).status_code, 403)
             sample = self.client.get('/api/me').json()['demo_certificates']
             self.assertEqual(sample, [])
             self.assertEqual(self.client.get('/api/me').json()['certificates'], [])
