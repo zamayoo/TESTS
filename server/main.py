@@ -462,7 +462,7 @@ def certificate_record(identifier: str):
                 FROM demo_certificates d JOIN users u ON u.id=d.user_id
                 WHERE d.code=?''',(identifier,)).fetchone()
             if not row:raise HTTPException(404, 'Документ не знайдено.')
-            return {'id':row['id'],'type':'demo','status':'sample','name':row['name'],
+            return {'id':row['id'],'type':'demo','status':'sample','name':'Демонстраційний зразок',
                     'created_at':row['created_at'],'passed':False,
                     'official':False,'message':'Демонстраційний зразок. Не підтверджує складання іспиту або кваліфікацію.'}
         row=con.execute('''SELECT id,name,score,correct,passed,created_at
