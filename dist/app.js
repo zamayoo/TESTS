@@ -216,7 +216,33 @@ if(exam.serverId){
   verification.replaceChildren();
 }
 $('examReview').hidden=true;$('examReview').innerHTML=exam.cards.map((c,i)=>{let right=c.chosen===c.quiz.correct;return `<div class="review-item"><strong>${i+1}. ${safe(c.q.question)}</strong><p class="${right?'good':'bad-text'}">${right?'✓ Правильно':'✕ Помилка або пропуск'} · Правильна відповідь: ${letters[c.quiz.correct]}. ${safe(c.quiz.choices[c.quiz.correct])}</p><p>${safe(normativeExplanation(c.q,c.quiz))}</p></div>`}).join('')}
-function initializeExam(){let count=items.filter(q=>!q.missing).length;$('totalQuestionCount').textContent=count.toLocaleString('uk-UA');$('studyModeBtn').onclick=()=>setMode('study');$('examModeBtn').onclick=()=>setMode('exam');$('startExam').onclick=startExam;$('examPrevious').onclick=()=>{if(examIndex>0){examIndex--;renderExam()}};$('examNext').onclick=()=>{if(examIndex<39){examIndex++;renderExam()}};$('examFinish').onclick=finishExam;$('reviewMistakes').onclick=()=>{$('examReview').hidden=!$('examReview').hidden};$('newExam').onclick=()=>{exam=null;setMode('exam')};$('printCertificate').onclick=()=>window.print();$('testSound').onclick=async()=>{
+async function printExamCertificate(){
+  const source=$('certificate');
+  if(!source)return;
+  document.getElementById('examCertificatePrintRoot')?.remove();
+  const root=document.createElement('div');
+  root.id='examCertificatePrintRoot';
+  const copy=source.cloneNode(true);
+  copy.removeAttribute('id');
+  root.appendChild(copy);
+  document.body.appendChild(root);
+  document.body.classList.add('print-exam-certificate');
+  const cleanup=()=>{
+    document.body.classList.remove('print-exam-certificate');
+    root.remove();
+    window.removeEventListener('afterprint',cleanup);
+  };
+  window.addEventListener('afterprint',cleanup);
+  try{
+    await Promise.all(Array.from(copy.querySelectorAll('img')).map(img=>img.decode().catch(()=>{})));
+    window.print();
+  }catch(error){
+    cleanup();
+    alert('Не вдалося підготувати друк: '+error.message);
+  }
+}
+
+function initializeExam(){let count=items.filter(q=>!q.missing).length;$('totalQuestionCount').textContent=count.toLocaleString('uk-UA');$('studyModeBtn').onclick=()=>setMode('study');$('examModeBtn').onclick=()=>setMode('exam');$('startExam').onclick=startExam;$('examPrevious').onclick=()=>{if(examIndex>0){examIndex--;renderExam()}};$('examNext').onclick=()=>{if(examIndex<39){examIndex++;renderExam()}};$('examFinish').onclick=finishExam;$('reviewMistakes').onclick=()=>{$('examReview').hidden=!$('examReview').hidden};$('newExam').onclick=()=>{exam=null;setMode('exam')};$('printCertificate').onclick=printExamCertificate;$('testSound').onclick=async()=>{
   stop();
   const token=speechGeneration;
   const phrase='Вітаю! Перевіряємо українське озвучення. Слухайте, будь ласка, природне звучання голосу.';
