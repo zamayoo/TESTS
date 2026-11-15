@@ -150,7 +150,7 @@ window.testsAccount = (() => {
       } catch(err) {el('authNotice').textContent=err.message;}
       finally {el('authSubmit').disabled=false;}
     };
-    return refresh();
+    return refresh().then(current=>{if(current && !params.has('reset')) el('accountArea').hidden=false;return current;});
   }
   function blockedUntil() { if(!user)return null; const until=Math.max(0,...(user.certificates||[]).filter(c=>!c.passed).map(c=>c.next_allowed_at||0));return until*1000>Date.now()?new Date(until*1000):null; }
   return {setup,sync,submitExam,refresh,show,blockedUntil,isLoggedIn:()=>!!user};
