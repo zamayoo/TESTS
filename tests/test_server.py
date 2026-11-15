@@ -85,7 +85,7 @@ class AccountTests(unittest.TestCase):
             qr=self.client.get('/api/certificates/qr/'+real_id)
             self.assertEqual(qr.status_code,200)
             self.assertIn('image/png',qr.headers['content-type'])
-            self.assertTrue(qr.content.startswith(b'\\x89PNG\\r\\n\\x1a\\n'))
+            self.assertTrue(qr.content.startswith(bytes([137,80,78,71,13,10,26,10])))
             self.assertGreater(len(qr.content),100)
             page=self.client.get('/verify/'+real_id)
             self.assertEqual(page.status_code,200)
