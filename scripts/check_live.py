@@ -51,7 +51,7 @@ def deployment_ready():
         raise RuntimeError("Homepage HTTP " + str(status))
     text = html.decode("utf-8")
     local = (ROOT / "dist/index.html").read_text(encoding="utf-8")
-    expected = re.search(r'app\\.js\\?v=\\d+', local)
+    expected = re.search(r"app[.]js[?]v=[0-9]+", local)
     if not expected or expected.group(0) not in text:
         raise RuntimeError("Homepage is not serving the current app.js version")
     for path in ("app.js", "account.js", "privacy.html"):
