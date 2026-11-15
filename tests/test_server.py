@@ -34,6 +34,10 @@ class AccountTests(unittest.TestCase):
             login = self.client.post('/api/login',json={'email':'oleg@example.org','password':'LongPassword9!'})
             self.assertEqual(login.status_code, 200, login.text)
             self.assertEqual(self.client.get('/api/me').json()['email'], 'oleg@example.org')
+            sample = self.client.get('/api/me').json()['demo_certificates']
+            self.assertEqual(len(sample), 1)
+            self.assertEqual(sample[0]['code'], 'DEMO-TESTS-0001')
+            self.assertEqual(self.client.get('/api/me').json()['certificates'], [])
             progress = {'answers': {'legislation-1':{'correct': True}}}
             self.assertEqual(self.client.put('/api/progress',json={'payload':progress}).status_code,200)
             self.assertEqual(self.client.get('/api/me').json()['progress'],progress)
