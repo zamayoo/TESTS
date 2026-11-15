@@ -68,6 +68,10 @@ class AccountTests(unittest.TestCase):
             login = self.client.post('/api/login',json={'email':'oleg@example.org','password':'LongPassword9!'})
             self.assertEqual(login.status_code, 200, login.text)
             self.assertEqual(self.client.get('/api/me').json()['email'], 'oleg@example.org')
+            profile = self.client.put('/api/profile', json={'name':'Олег Замай'})
+            self.assertEqual(profile.status_code, 200, profile.text)
+            self.assertEqual(profile.json()['name'], 'Олег Замай')
+            self.assertEqual(self.client.get('/api/me').json()['name'], 'Олег Замай')
             sample = self.client.get('/api/me').json()['demo_certificates']
             self.assertEqual(sample, [])
             self.assertEqual(self.client.get('/api/me').json()['certificates'], [])
@@ -91,6 +95,20 @@ class AccountTests(unittest.TestCase):
         self.assertEqual(response.json()['score'],100)
         self.assertTrue(response.json()['passed'])
         self.assertEqual(len(self.client.get('/api/me').json()['certificates']),1)
+
+
+class InterfaceStructureTests(unittest.TestCase):
+    def test_spa_views_and_navigation_are_separate(self):
+        root = Path(__file__).parents[1]
+        html = (root / 'dist' / 'index.html').read_text(encoding='utf-8')
+        script = (root / 'dist' / 'app.js').read_text(encoding='utf-8')
+        for view in ('catalogView', 'learningView', 'certificationView', 'accountView'):
+            self.assertEqual(html.count(f'id="{view}"'), 1)
+        for route in ('catalog', 'learning', 'certification', 'account'):
+            self.assertIn(f'data-route="{route}"', html)
+            self.assertIn(route, script)
+        self.assertIn("window.testsNavigate", script)
+        self.assertIn("location.hash", script)
 
 
 if __name__ == '__main__':

@@ -28,7 +28,10 @@ window.testsAccount = (() => {
     }
     return `<svg viewBox="0 0 ${size} ${size}" aria-label="Візуальна матриця демонстраційного сертифіката" role="img"><rect width="${size}" height="${size}" class="matrix-paper"/>${cells.join('')}</svg>`;
   }
-  function show(open=true) { el('accountArea').hidden=!open; if(open)el('accountArea').scrollIntoView({behavior:'smooth',block:'start'}); }
+  function show(open=true) {
+    if(window.testsNavigate)window.testsNavigate(open?'account':'catalog');
+    else el('accountView').hidden=!open;
+  }
   function mode(which) {
     authMode=which; el('nameAuthWrap').hidden=which!=='register';
     el('passwordAuthWrap').hidden=which==='forgot';
@@ -42,7 +45,21 @@ window.testsAccount = (() => {
     el('accountTitle').textContent=user?'Мій профіль':'Вхід і реєстрація';
     el('profileBtn').textContent=user?'👤 '+(user.name||user.email):'👤 Особистий кабінет';
     if(!user)return;
-    el('memberEmail').textContent=[user.name,user.email].filter(Boolean).join(' · ');
+    document.querySelector('.profile-summary').innerHTML=`
+      <div class="profile-avatar" aria-hidden="true">${safe((user.name||user.email||'T').charAt(0).toLocaleUpperCase('uk-UA'))}</div>
+      <form id="profileForm" class="profile-form">
+        <label>Ім’я та прізвище<input id="profileName" value="${safe(user.name||'')}" autocomplete="name" required minlength="2" maxlength="120"></label>
+        <label>Електронна пошта<input id="profileEmail" value="${safe(user.email)}" type="email" readonly aria-readonly="true"></label>
+        <div class="profile-form-actions"><button id="profileSave" class="primary" type="submit">Зберегти зміни</button><span id="profileNotice" role="status" aria-live="polite"></span></div>
+      </form>`;
+    el('profileForm').onsubmit=async event=>{
+      event.preventDefault();
+      const button=el('profileSave'),name=el('profileName').value.trim();
+      button.disabled=true;el('profileNotice').textContent='Зберігаємо…';
+      try{const result=await api('profile',{method:'PUT',body:JSON.stringify({name})});user.name=result.name;el('profileNotice').textContent='Зміни збережено.';el('profileBtn').textContent='○ '+result.name;}
+      catch(error){el('profileNotice').textContent=error.message}
+      finally{button.disabled=false}
+    };
     const answers=user.progress?.answers||{};
     const taken=Object.values(answers), correct=taken.filter(x=>x?.correct).length;
     const certificates=user.certificates||[];
@@ -150,7 +167,7 @@ window.testsAccount = (() => {
       } catch(err) {el('authNotice').textContent=err.message;}
       finally {el('authSubmit').disabled=false;}
     };
-    return refresh().then(current=>{if(current && !params.has('reset')) el('accountArea').hidden=false;return current;});
+    return refresh();
   }
   function blockedUntil() { if(!user)return null; const until=Math.max(0,...(user.certificates||[]).filter(c=>!c.passed).map(c=>c.next_allowed_at||0));return until*1000>Date.now()?new Date(until*1000):null; }
   return {setup,sync,submitExam,refresh,show,blockedUntil,isLoggedIn:()=>!!user};

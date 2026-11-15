@@ -16,6 +16,49 @@ const normPending='Точне посилання на чинну норму дл
 function normativeExplanation(q,opt){let norm=verifiedNorms[q.id];if(!norm)return normPending;return (opt.explanation||'') .replace(/\s*(Старий текст PDF[^.]*\.|У попередньому чат-тесті[^.]*\.|Відповідь зі старого PDF[^.]*\.|Застарілий перелік у PDF[^.]*\.)/g,'')+'\n\nНорма: '+norm.name+'\n'+norm.url}
 let data,items=[],activeGroup='legislation',active=0,filter='all',query='',state={answers:{},notes:{},bookmarks:{},font:1};
 let appMode='study',exam=null,examIndex=0;
+const routeMeta={
+ catalog:['НАВЧАЛЬНА ПЛАТФОРМА','Каталог напрямів'],
+ learning:['КУРС · ДЕРЖАВНА СЛУЖБА','Навчання'],
+ certification:['КУРС · ДЕРЖАВНА СЛУЖБА','Сертифікація'],
+ account:['ОСОБИСТИЙ ПРОСТІР','Особистий кабінет']
+};
+function routeFromLocation(){
+ const route=location.hash.replace(/^#\/?/,'').split('/')[0];
+ return routeMeta[route]?route:'catalog';
+}
+function closeMobileMenu(){
+ $('sidebar')?.classList.remove('open');
+ $('sidebarScrim').hidden=true;
+ $('menuBtn')?.setAttribute('aria-expanded','false');
+}
+function navigate(route,{replace=false,focus=true}={}){
+ if(!routeMeta[route])route='catalog';
+ document.querySelectorAll('[data-view]').forEach(view=>view.hidden=view.dataset.view!==route);
+ document.querySelectorAll('.app-nav-item').forEach(button=>{
+  const selected=button.dataset.route===route;
+  button.classList.toggle('active',selected);
+  if(selected)button.setAttribute('aria-current','page');else button.removeAttribute('aria-current');
+ });
+ $('learningNavigation').hidden=route!=='learning';
+ document.body.dataset.route=route;
+ const [eyebrow,title]=routeMeta[route];
+ $('routeEyebrow').textContent=eyebrow;
+ $('routeTitle').textContent=title;
+ document.title=title+' — TESTS';
+ appMode=route==='certification'?'exam':'study';
+ if(route==='certification'){
+  $('examSetup').hidden=!!exam;
+  $('examActive').hidden=!exam||exam.finished;
+  $('examResult').hidden=!exam||!exam.finished;
+  if(exam&&!exam.finished)renderExam();
+  if(exam?.finished)renderResult();
+ }
+ const nextHash='#/'+route;
+ if(location.hash!==nextHash)history[replace?'replaceState':'pushState'](null,'',nextHash);
+ closeMobileMenu();
+ if(focus){window.scrollTo({top:0,behavior:'smooth'});$('mainContent')?.focus({preventScroll:true})}
+}
+window.testsNavigate=(route,options)=>navigate(route,options);
 try{state={...state,...JSON.parse(localStorage.getItem(STORAGE)||'{}')}}catch{}
 function save(){try{localStorage.setItem(STORAGE,JSON.stringify(state))}catch{};window.testsAccount?.sync(state)}
 function safe(s){return String(s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -150,7 +193,12 @@ async function speak(){let card=appMode==='exam'&&exam&&!exam.finished?exam.card
 }}
 function copy(){let q=getCurrent(),o=q&&makeQuiz(q);if(!q)return;let txt='Питання '+q.number+'. '+q.question+'\n'+(o?o.choices.map((v,i)=>`${i+1}. ${v}`).join('\n'):'Питання відсутнє у джерелі.');navigator.clipboard?.writeText(txt).then(()=>{let btn=$('copyBtn');btn.textContent='✓ Скопійовано';setTimeout(()=>btn.textContent='▢ Скопіювати запитання',1600)}).catch(()=>prompt('Скопіюйте запитання:',txt))}
 function randomOrder(list){let a=[...list];for(let i=a.length-1;i>0;i--){let bytes=new Uint32Array(1);crypto.getRandomValues(bytes);let j=bytes[0]%(i+1);[a[i],a[j]]=[a[j],a[i]]}return a}
-function setMode(mode){appMode=mode;stop();$('studyArea').hidden=mode!=='study';$('examSetup').hidden=mode!=='exam'||!!exam;$('examActive').hidden=mode!=='exam'||!exam||exam.finished;$('examResult').hidden=mode!=='exam'||!exam||!exam.finished;$('studyModeBtn').classList.toggle('selected',mode==='study');$('examModeBtn').classList.toggle('selected',mode==='exam');if(mode==='exam'&&exam&&!exam.finished)renderExam();if(mode==='exam'&&exam?.finished)renderResult()}
+function setMode(mode){
+ appMode=mode;stop();
+ $('studyModeBtn').classList.toggle('selected',mode==='study');
+ $('examModeBtn').classList.toggle('selected',mode==='exam');
+ navigate(mode==='exam'?'certification':'learning');
+}
 function attemptKey(person){return 'civil-service-exam-'+person.toLocaleLowerCase('uk-UA').replace(/\s+/g,'-')}
 function retryDate(person){try{let record=JSON.parse(localStorage.getItem(attemptKey(person))||'null');return record?.nextAllowedAt&&Date.now()<Date.parse(record.nextAllowedAt)?new Date(record.nextAllowedAt):null}catch{return null}}
 function startExam(){let names=['surname','givenName','patronymic'].map(id=>$(id).value.trim().replace(/\s+/g,' '));if(names.some(v=>!v)||names.some(v=>!/^[А-Яа-яІіЇїЄєҐґ’'\- ]+$/.test(v))){$('examSetupError').textContent='Введіть прізвище, ім’я та по батькові українськими літерами.';return}let person=names.join(' '),next=window.testsAccount?.blockedUntil()||retryDate(person);if(next){$('examSetupError').textContent='Повторне тестування буде доступне з '+next.toLocaleString('uk-UA')+'. До цього часу можете навчатися в режимі «Навчання».';return}let available=items.filter(q=>!q.missing);if(available.length<40){$('examSetupError').textContent='Недостатньо питань для тесту.';return}let cards=randomOrder(available).slice(0,40).map(q=>{let base=makeQuiz(q),order=randomOrder([0,1,2,3]);return{q,quiz:{...base,choices:order.map(i=>base.choices[i]),correct:order.indexOf(base.correct)},chosen:null}});exam={person,cards,finished:false,startedAt:new Date().toISOString()};examIndex=0;$('examSetupError').textContent='';setMode('exam')}
@@ -178,7 +226,28 @@ function initializeExam(){let count=items.filter(q=>!q.missing).length;$('totalQ
     catch(e){if(token===speechGeneration)setSpeechStatus('Голосовий тест не пройдено: '+e.message);}
   }
 }}
-async function init(){let response=await fetch('questions.json');data=await response.json();items=data.questions;await window.testsAccount?.setup(serverProgress=>{state={...state,...serverProgress};try{localStorage.setItem(STORAGE,JSON.stringify(state))}catch{};render()});render();initializeExam();$('prevBtn').onclick=()=>shift(-1);$('nextBtn').onclick=()=>shift(1);$('speakBtn').onclick=speak;$('speechTop').onclick=speak;$('stopBtn').onclick=stop;$('copyBtn').onclick=copy;
+async function init(){
+ let response=await fetch('questions.json');data=await response.json();items=data.questions;
+ await window.testsAccount?.setup(serverProgress=>{state={...state,...serverProgress};try{localStorage.setItem(STORAGE,JSON.stringify(state))}catch{};render()});
+ render();initializeExam();
+ $('catalogQuestionCount').textContent=items.filter(q=>!q.missing).length.toLocaleString('uk-UA');
+ $('catalogTopicCount').textContent=data.groups.length;
+ document.querySelectorAll('[data-route]').forEach(button=>button.onclick=()=>navigate(button.dataset.route));
+ document.querySelectorAll('[data-course-action]').forEach(button=>button.onclick=()=>navigate(button.dataset.courseAction));
+ $('courseSearch').oninput=event=>{
+  const term=event.target.value.trim().toLocaleLowerCase('uk-UA');
+  let visible=0;
+  document.querySelectorAll('[data-course]').forEach(card=>{const show=!term||card.dataset.course.includes(term)||card.textContent.toLocaleLowerCase('uk-UA').includes(term);card.hidden=!show;if(show)visible++});
+  $('courseEmpty').hidden=visible>0;
+ };
+ $('menuBtn').onclick=()=>{
+  const open=!$('sidebar').classList.contains('open');
+  $('sidebar').classList.toggle('open',open);$('sidebarScrim').hidden=!open;$('menuBtn').setAttribute('aria-expanded',String(open));
+ };
+ $('sidebarScrim').onclick=closeMobileMenu;
+ window.addEventListener('hashchange',()=>navigate(routeFromLocation(),{replace:true,focus:false}));
+ navigate(routeFromLocation(),{replace:true,focus:false});
+ $('prevBtn').onclick=()=>shift(-1);$('nextBtn').onclick=()=>shift(1);$('speakBtn').onclick=speak;$('speechTop').onclick=speak;$('stopBtn').onclick=stop;$('copyBtn').onclick=copy;
  $('ttsMode').value=state.ttsMode||'server';$('voiceWrap').hidden=$('ttsMode').value!=='browser';$('ttsRate').value=String(state.ttsRate||.9);$('ttsMode').onchange=()=>{stop();state.ttsMode=$('ttsMode').value;$('voiceWrap').hidden=state.ttsMode!=='browser';save();setSpeechStatus(state.ttsMode==='server'?'Тетяна · жіночий український голос на сервері.':state.ttsMode==='neural'?'Резервна модель MMS завантажується в браузер.':'Виберіть один із голосів, доступних у браузері.')};$('ttsRate').onchange=()=>{state.ttsRate=Number($('ttsRate').value);save()};$('voiceSelect').onchange=()=>{state.ttsVoice=$('voiceSelect').value;save()};listVoices();if('speechSynthesis'in window)speechSynthesis.onvoiceschanged=listVoices;
  $('fontBtn').onclick=()=>{state.font=state.font>=1.36?1:Math.round((state.font+.12)*100)/100;document.documentElement.style.setProperty('--scale',state.font);save()};document.documentElement.style.setProperty('--scale',state.font||1);
  $('search').oninput=e=>{query=e.target.value;active=0;render()};$('filter').onchange=e=>{filter=e.target.value;active=0;render()};

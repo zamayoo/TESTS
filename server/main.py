@@ -100,6 +100,10 @@ class Progress(BaseModel):
     payload: dict
 
 
+class ProfileUpdate(BaseModel):
+    name: str = Field(min_length=2, max_length=120)
+
+
 class ExamAnswer(BaseModel):
     id: str
     answer: str = Field(max_length=1000)
@@ -301,6 +305,18 @@ def me(request: Request):
         ).fetchall()]
     return {'email': user['email'], 'name': user['display_name'], 'progress': json.loads(row['payload']) if row else None,
             'certificates': certificates, 'demo_certificates': samples}
+
+
+@app.put('/api/profile')
+def update_profile(data: ProfileUpdate, request: Request):
+    check_origin(request)
+    user = logged_in(request)
+    name = ' '.join(data.name.strip().split())
+    if len(name) < 2:
+        raise HTTPException(422, 'Вкажіть ім’я та прізвище.')
+    with db() as con:
+        con.execute('UPDATE users SET display_name=? WHERE id=?', (name, user['id']))
+    return {'ok': True, 'name': name}
 
 
 @app.put('/api/progress')
