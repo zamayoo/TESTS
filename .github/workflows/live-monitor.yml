@@ -36,10 +36,12 @@ jobs:
       - name: Verify deployment, API, Google redirect, privacy and Piper WAV
         run: python scripts/check_live.py
       - name: Install browser for actual audio playback test
+        if: success() || failure()
         run: |
           python -m pip install 'playwright>=1.50,<2'
           python -m playwright install --with-deps chromium
       - name: Test Piper playback in Chromium
+        if: success() || failure()
         run: python scripts/check_browser.py
       - name: Preserve verification results
         if: always()
