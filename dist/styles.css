@@ -107,13 +107,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible,te
 .certificates-heading{font-size:18px;margin:20px 0 6px;color:#174851}
 .certificate-help{color:#728b8f;font-size:12px;line-height:1.55;margin:0 0 13px}
 #demoCertificateSection{margin:12px 0;padding:14px;border:1px solid #d5e7e3;border-radius:15px;background:#f8fcfb}
-#demoCertificateSection .demo-certificate{min-height:240px;max-height:340px;overflow:hidden;padding:20px 15px}
-#demoCertificateSection .demo-cert-title{font-size:clamp(23px,2vw,36px);margin:5px}
-#demoCertificateSection .demo-cert-watermark{margin:10px 0 4px}
-#demoCertificateSection .demo-cert-name{font-size:clamp(18px,2vw,27px);margin:12px auto 8px;padding-bottom:8px}
-#demoCertificateSection .demo-cert-description{font-size:10px;margin-bottom:10px}
-#demoCertificateSection .demo-cert-bottom{padding-top:9px}
-#demoCertificateSection .demo-cert-warning{margin-top:9px}
+#demoCertificateSection .demo-certificate{width:100%;max-width:940px}
 #demoCertificateSection #printDemoCertificate{display:block;max-width:max-content;margin:12px auto 0;padding:11px 17px;background:#e8f7f3;border:1px solid #bde0d8;border-radius:10px;color:#0b6566}
 .mode-picker{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin:19px 0}
 .mode-picker button{min-height:80px;border-radius:15px;text-align:left;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:6px;padding:15px 23px;font-size:16px;font-weight:900}
