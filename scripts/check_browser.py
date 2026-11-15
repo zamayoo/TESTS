@@ -15,7 +15,7 @@ try:
             headless=True, args=["--autoplay-policy=no-user-gesture-required"]
         )
         page = browser.new_page(permissions=[])
-        page.goto(url + "/?monitor=" + os.environ.get("GITHUB_SHA", "latest") + "#/learning",
+        page.goto(url + "/?monitor=" + os.environ.get("GITHUB_SHA", "latest") + "#/settings",
                   wait_until="domcontentloaded", timeout=45000)
         page.locator(".voice-settings > summary").wait_for(state="visible", timeout=20000)
         page.locator(".voice-settings > summary").click()
