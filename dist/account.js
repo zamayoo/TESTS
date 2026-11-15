@@ -28,7 +28,7 @@ window.testsAccount = (() => {
     }
     return `<svg viewBox="0 0 ${size} ${size}" aria-label="Візуальна матриця демонстраційного сертифіката" role="img"><rect width="${size}" height="${size}" class="matrix-paper"/>${cells.join('')}</svg>`;
   }
-  function show(open=true) { el('accountArea').hidden=!open; if(open)el('accountArea').scrollIntoView({behavior:'smooth',block:'start'}); }
+  function show(open=true) { if(open){el('accountArea').hidden=false;window.testsNavigate?.('account');}else{window.testsNavigate?.('home');} }
   function mode(which) {
     authMode=which; el('nameAuthWrap').hidden=which!=='register';
     el('passwordAuthWrap').hidden=which==='forgot';
