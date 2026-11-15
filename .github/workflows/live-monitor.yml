@@ -1,0 +1,65 @@
+name: TESTS — live website and voice checks
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 */4 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: tests-live-checks
+  cancel-in-progress: true
+
+jobs:
+  live-tests:
+    name: Production smoke and Piper playback
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    env:
+      TESTS_URL: https://tests.finoraledger.com
+    steps:
+      - name: Checkout expected site sources
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify deployment, API, Google redirect, privacy and Piper WAV
+        run: python scripts/check_live.py
+      - name: Install browser for actual audio playback test
+        run: |
+          python -m pip install 'playwright>=1.50,<2'
+          python -m playwright install --with-deps chromium
+      - name: Test Piper playback in Chromium
+        run: python scripts/check_browser.py
+      - name: Preserve verification results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tests-live-monitor
+          path: monitor-results/
+          if-no-files-found: ignore
+          retention-days: 14
+      - name: Open or update GitHub issue on check failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const title = '[TESTS] Production self-check failed';
+            const link = `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`;
+            const body = `Automatic website, deployment, or audio verification failed.\n\nRun: ${link}\nCommit: ${context.sha}\n\nReview the saved monitor-results artifact and the failing step. No server credentials are used by this check.`;
+            const response = await github.rest.issues.listForRepo({owner, repo, state: 'open', per_page: 100});
+            const existing = response.data.find(issue => issue.title === title && !issue.pull_request);
+            if (existing) {
+              await github.rest.issues.createComment({owner, repo, issue_number: existing.number, body});
+            } else {
+              await github.rest.issues.create({owner, repo, title, body});
+            }
