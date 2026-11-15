@@ -61,8 +61,8 @@ function currentList(){return items.filter(q=>{
 function getCurrent(){let list=currentList();if(active>=list.length)active=Math.max(0,list.length-1);return list[active]}
 function renderBlocks(){let groups=[{id:'all',title:'Усі питання'}].concat(data.groups);
  $('blocks').innerHTML=groups.map(g=>{let questions=items.filter(q=>g.id==='all'||q.group===g.id);let answered=questions.filter(q=>state.answers[q.id]).length;return `<button class="block ${activeGroup===g.id?'active':''}" data-group="${g.id}"><span class="block-ico">${icons[g.id]||'▤'}</span><span><strong>${safe(g.title)}</strong><small>${answered} / ${questions.filter(q=>!q.missing).length} опрацьовано</small><span class="block-progress"><span style="width:${questions.filter(q=>!q.missing).length?Math.round(answered/questions.filter(q=>!q.missing).length*100):0}%"></span></span></span></button>`}).join('');
- document.querySelectorAll('.block').forEach(b=>b.onclick=()=>{activeGroup=b.dataset.group;active=0;query='';filter='all';$('search').value='';$('filter').value='all';render()});
- const cards=$('topicCards');if(cards){cards.innerHTML=groups.map(g=>{const questions=items.filter(q=>g.id==='all'||q.group===g.id&&!q.missing),done=questions.filter(q=>state.answers[q.id]).length,total=questions.length,percent=total?Math.round(done/total*100):0;return `<button class="topic-card ${activeGroup===g.id?'active':''}" data-topic="${safe(g.id)}" type="button"><span class="topic-card-icon">${icons[g.id]||'▤'}</span><span class="topic-card-copy"><strong>${safe(g.title)}</strong><small>${total} питань</small></span><span class="topic-ring" style="--pct:${percent}%">${percent}%</span><span class="topic-arrow">›</span></button>`}).join('');cards.querySelectorAll('[data-topic]').forEach(b=>b.onclick=()=>{activeGroup=b.dataset.topic;active=0;query='';filter='all';$('search').value='';$('filter').value='all';render();$('questionCard').scrollIntoView({behavior:'smooth',block:'start'})})}
+ document.querySelectorAll('.block').forEach(b=>b.onclick=()=>{activeGroup=b.dataset.group;active=0;query='';filter='all';$('search').value='';$('filter').value='all';render();navigate('learning')});
+ const cards=$('topicCards');if(cards){cards.innerHTML=groups.map(g=>{const questions=items.filter(q=>g.id==='all'||q.group===g.id&&!q.missing),done=questions.filter(q=>state.answers[q.id]).length,total=questions.length,percent=total?Math.round(done/total*100):0;return `<button class="topic-card ${activeGroup===g.id?'active':''}" data-topic="${safe(g.id)}" type="button"><span class="topic-card-icon">${icons[g.id]||'▤'}</span><span class="topic-card-copy"><strong>${safe(g.title)}</strong><small>${total} питань</small></span><span class="topic-ring" style="--pct:${percent}%">${percent}%</span><span class="topic-arrow">›</span></button>`}).join('');cards.querySelectorAll('[data-topic]').forEach(b=>b.onclick=()=>{activeGroup=b.dataset.topic;active=0;query='';filter='all';$('search').value='';$('filter').value='all';render();navigate('learning');$('questionCard').scrollIntoView({behavior:'smooth',block:'start'})})}
 }
 function renderStats(){let present=items.filter(q=>!q.missing);let taken=present.filter(q=>state.answers[q.id]);let correct=taken.filter(q=>state.answers[q.id].correct);let wrong=taken.length-correct.length;
  const bits=[['ОПРАЦЬОВАНО',taken.length,'▤'],['ПРАВИЛЬНИХ',correct.length,'✓'],['ПОМИЛОК',wrong,'↺'],['ТОЧНІСТЬ',taken.length?Math.round(correct.length/taken.length*100)+'%':'0%','◎']];$('stats').innerHTML=bits.map(a=>`<div class="stat"><div><small>${a[0]}</small><strong>${a[1]}</strong></div><div class="stat-icon">${a[2]}</div></div>`).join('')}
@@ -178,6 +178,28 @@ function initializeExam(){let count=items.filter(q=>!q.missing).length;$('totalQ
     catch(e){if(token===speechGeneration)setSpeechStatus('Голосовий тест не пройдено: '+e.message);}
   }
 }}
+
+// Separate, addressable SPA workspaces, while preserving existing quiz and exam engines.
+function navigate(view,{scroll=true}={}){
+ const pages=['home','catalog','learning','certification','account'];
+ if(!pages.includes(view))view='home';
+ document.querySelectorAll('.spa-view').forEach(node=>node.hidden=node.id!=='view-'+view);
+ document.querySelectorAll('[data-view]').forEach(node=>node.classList.toggle('active',node.dataset.view===view));
+ document.body.dataset.activeView=view;
+ if(view==='learning')setMode('study');
+ if(view==='certification')setMode('exam');
+ if(scroll)window.scrollTo({top:0,behavior:'instant'});
+ const url=new URL(location.href);url.searchParams.set('view',view);
+ history.replaceState(history.state,'',url.pathname+url.search+url.hash);
+}
+window.testsNavigate=navigate;
+function installNavigation(){
+ document.querySelectorAll('[data-view]').forEach(button=>button.addEventListener('click',()=>navigate(button.dataset.view)));
+ const route=new URLSearchParams(location.search).get('view')||'home';
+ navigate(route,{scroll:false});
+ window.addEventListener('popstate',()=>navigate(new URLSearchParams(location.search).get('view')||'home',{scroll:false}));
+}
+
 async function init(){let response=await fetch('questions.json');data=await response.json();items=data.questions;await window.testsAccount?.setup(serverProgress=>{state={...state,...serverProgress};try{localStorage.setItem(STORAGE,JSON.stringify(state))}catch{};render()});render();initializeExam();$('prevBtn').onclick=()=>shift(-1);$('nextBtn').onclick=()=>shift(1);$('speakBtn').onclick=speak;$('speechTop').onclick=speak;$('stopBtn').onclick=stop;$('copyBtn').onclick=copy;
  $('ttsMode').value=state.ttsMode||'server';$('voiceWrap').hidden=$('ttsMode').value!=='browser';$('ttsRate').value=String(state.ttsRate||.9);$('ttsMode').onchange=()=>{stop();state.ttsMode=$('ttsMode').value;$('voiceWrap').hidden=state.ttsMode!=='browser';save();setSpeechStatus(state.ttsMode==='server'?'Тетяна · жіночий український голос на сервері.':state.ttsMode==='neural'?'Резервна модель MMS завантажується в браузер.':'Виберіть один із голосів, доступних у браузері.')};$('ttsRate').onchange=()=>{state.ttsRate=Number($('ttsRate').value);save()};$('voiceSelect').onchange=()=>{state.ttsVoice=$('voiceSelect').value;save()};listVoices();if('speechSynthesis'in window)speechSynthesis.onvoiceschanged=listVoices;
  $('fontBtn').onclick=()=>{state.font=state.font>=1.36?1:Math.round((state.font+.12)*100)/100;document.documentElement.style.setProperty('--scale',state.font);save()};document.documentElement.style.setProperty('--scale',state.font||1);
@@ -185,6 +207,7 @@ async function init(){let response=await fetch('questions.json');data=await resp
  $('jumpBtn').onclick=()=>{let n=Number($('jumpInput').value),q=items.find(x=>x.number===n);if(q){activeGroup=q.group;filter='all';query='';$('search').value='';$('filter').value='all';active=items.filter(x=>x.group===activeGroup).findIndex(x=>x.number===n);render()}};
  $('exportBtn').onclick=()=>{let b=new Blob([JSON.stringify({format:'audit-trainer-progress-v1',state,exported:new Date().toISOString()},null,2)],{type:'application/json'}),u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download='audit-trainer-progress.json';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)};
  $('importFile').onchange=async e=>{let f=e.target.files?.[0];if(!f)return;try{let p=JSON.parse(await f.text());if(p.format!=='audit-trainer-progress-v1'||!p.state)throw Error('Некоректний формат');if(!confirm('Замінити поточний прогрес даними з файлу?'))return;state=p.state;save();render();alert('Прогрес завантажено.')}catch(err){alert('Не вдалося імпортувати: '+err.message)}};
+ installNavigation();
  $('resetBtn').onclick=()=>{if(confirm('Видалити всі відповіді, позначки та коментарі в цьому браузері?')){state={answers:{},notes:{},bookmarks:{},font:1};save();render()}};
 }
 init().catch(err=>{$('questionText').textContent='Помилка завантаження запитань: '+err.message});
