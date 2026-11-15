@@ -15,8 +15,10 @@ try:
             headless=True, args=["--autoplay-policy=no-user-gesture-required"]
         )
         page = browser.new_page(permissions=[])
-        page.goto(url + "/?monitor=" + os.environ.get("GITHUB_SHA", "latest"),
+        page.goto(url + "/?monitor=" + os.environ.get("GITHUB_SHA", "latest") + "#/learning",
                   wait_until="domcontentloaded", timeout=45000)
+        page.locator(".voice-settings > summary").wait_for(state="visible", timeout=20000)
+        page.locator(".voice-settings > summary").click()
         page.locator("#testSound").wait_for(state="visible", timeout=20000)
         # The button exists in the initial HTML before init() has loaded the
         # questions and attached its async click handler. Clicking too early is
