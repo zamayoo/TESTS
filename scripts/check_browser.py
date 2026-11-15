@@ -18,6 +18,13 @@ try:
         page.goto(url + "/?monitor=" + os.environ.get("GITHUB_SHA", "latest"),
                   wait_until="domcontentloaded", timeout=45000)
         page.locator("#testSound").wait_for(state="visible", timeout=20000)
+        # The button exists in the initial HTML before init() has loaded the
+        # questions and attached its async click handler. Clicking too early is
+        # a no-op and previously produced a misleading 125-second timeout.
+        page.wait_for_function(
+            "() => typeof document.getElementById('testSound')?.onclick === 'function'",
+            timeout=30000,
+        )
         page.locator("#ttsMode").select_option("server")
         page.evaluate("""() => {
           window.__testsMonitorPlayed = false;

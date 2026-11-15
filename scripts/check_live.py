@@ -54,7 +54,10 @@ def deployment_ready():
     expected = re.search(r"app[.]js[?]v=[0-9]+", local)
     if not expected or expected.group(0) not in text:
         raise RuntimeError("Homepage is not serving the current app.js version")
-    for path in ("app.js", "account.js", "privacy.html"):
+    # Cloudflare email-address protection rewrites privacy.html in transit, so
+    # byte comparison is invalid for that page. check_privacy() verifies its
+    # served content separately below.
+    for path in ("app.js", "account.js"):
         code, _, remote = fetch("/" + path + "?monitor=" + os.environ.get("GITHUB_SHA", "latest"))
         if code != 200:
             raise RuntimeError(path + " HTTP " + str(code))
@@ -67,7 +70,7 @@ def deployment_ready():
     health = json.loads(body)
     if health.get("demo_certificate_policy") != "email-v2":
         raise RuntimeError("Backend does not include the email-bound demo certificate fix")
-    return "Homepage, assets and email-bound demo certificate backend match GitHub main"
+    return "Homepage, JS assets and email-bound demo certificate backend match GitHub main"
 
 def require_json(path, status_expected=200):
     status, _, body = fetch(path)
