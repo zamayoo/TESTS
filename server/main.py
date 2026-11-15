@@ -96,6 +96,10 @@ class ResetPassword(BaseModel):
     password: str = Field(min_length=10, max_length=200)
 
 
+class ProfileUpdate(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+
+
 class Progress(BaseModel):
     payload: dict
 
@@ -301,6 +305,18 @@ def me(request: Request):
         ).fetchall()]
     return {'email': user['email'], 'name': user['display_name'], 'progress': json.loads(row['payload']) if row else None,
             'certificates': certificates, 'demo_certificates': samples}
+
+
+@app.put('/api/profile')
+def update_profile(data: ProfileUpdate, request: Request):
+    check_origin(request)
+    user = logged_in(request)
+    name = ' '.join(data.name.strip().split())
+    if not name:
+        raise HTTPException(422, 'Вкажіть ім’я для профілю.')
+    with db() as con:
+        con.execute('UPDATE users SET display_name=? WHERE id=?', (name, user['id']))
+    return {'ok': True, 'name': name}
 
 
 @app.put('/api/progress')
