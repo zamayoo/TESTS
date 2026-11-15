@@ -70,6 +70,8 @@ with db() as con:
         score INTEGER NOT NULL, correct INTEGER NOT NULL, passed INTEGER NOT NULL,
         created_at INTEGER NOT NULL, next_allowed_at INTEGER);
       CREATE INDEX IF NOT EXISTS certificates_user ON certificates(user_id, created_at);
+      CREATE TABLE IF NOT EXISTS demo_certificates (
+        user_id INTEGER PRIMARY KEY, code TEXT NOT NULL UNIQUE, created_at INTEGER NOT NULL);
     ''')
 
 
@@ -282,8 +284,16 @@ def me(request: Request):
     with db() as con:
         row = con.execute('SELECT payload FROM progress WHERE user_id=?', (user['id'],)).fetchone()
         certificates = [dict(x) for x in con.execute('SELECT * FROM certificates WHERE user_id=? ORDER BY created_at DESC', (user['id'],)).fetchall()]
+        # One sample certificate for the primary (first-registered) developer account.
+        # Kept separate from actual exam results to avoid fabricated qualification claims.
+        if user['id'] == 1:
+            con.execute('INSERT OR IGNORE INTO demo_certificates (user_id, code, created_at) VALUES (?,?,?)',
+                        (user['id'], 'DEMO-TESTS-0001', now()))
+        samples = [dict(x) for x in con.execute(
+            'SELECT code,created_at FROM demo_certificates WHERE user_id=?', (user['id'],)
+        ).fetchall()]
     return {'email': user['email'], 'name': user['display_name'], 'progress': json.loads(row['payload']) if row else None,
-            'certificates': certificates}
+            'certificates': certificates, 'demo_certificates': samples}
 
 
 @app.put('/api/progress')
