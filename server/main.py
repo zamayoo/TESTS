@@ -408,13 +408,16 @@ def voice_status():
     model = Path(os.getenv('PIPER_MODEL', '/models/uk_UA-tetiana-high.onnx'))
     fallback_ready = model.is_file() and model.with_suffix('.onnx.json').is_file()
     primary_ready = modern_voice.model_ready()
-    return {
+    result = {
         'ready': primary_ready or fallback_ready,
         'primary_ready': primary_ready,
         'fallback_ready': fallback_ready,
         'engine': 'ukrainian-tts-v6' if primary_ready else ('piper-fallback' if fallback_ready else 'unavailable'),
         'name': 'Тетяна · Ukrainian TTS v6 · автоматичні наголоси' if primary_ready else 'Тетяна · резервний Piper',
     }
+    if modern_voice.last_error():
+        result['primary_error'] = modern_voice.last_error()
+    return result
 
 
 @app.post('/api/voice')

@@ -18,10 +18,16 @@ MODEL_FILES = ("model.pth", "config.yaml", "spk_xvector.ark", "feats_stats.npz")
 MODEL_DIR = Path(os.getenv("UKRAINIAN_TTS_CACHE", "/models/ukrainian-tts-v6"))
 _engine = None
 _engine_lock = threading.Lock()
+_last_error = None
 
 
 def model_ready() -> bool:
     return all((MODEL_DIR / name).is_file() for name in MODEL_FILES)
+
+
+def last_error() -> str | None:
+    """Return a path-sanitized runtime diagnostic for the health endpoint."""
+    return _last_error
 
 
 def prepare_text(text: str) -> str:
@@ -64,11 +70,18 @@ def _get_engine():
 
 def synthesize(text: str) -> tuple[bytes, str]:
     """Return WAV bytes and the stress-annotated text used for synthesis."""
+    global _last_error
     from ukrainian_tts.tts import Voices, Stress
 
-    output = BytesIO()
-    output, accented = _get_engine().tts(
-        prepare_text(text), Voices.Tetiana.value, Stress.Dictionary.value, output
-    )
-    return output.getvalue(), accented
+    try:
+        output = BytesIO()
+        output, accented = _get_engine().tts(
+            prepare_text(text), Voices.Tetiana.value, Stress.Dictionary.value, output
+        )
+        _last_error = None
+        return output.getvalue(), accented
+    except Exception as exc:
+        message = str(exc).replace(str(MODEL_DIR), "[model]")[:300]
+        _last_error = f"{type(exc).__name__}: {message}"
+        raise
 
