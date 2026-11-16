@@ -2,7 +2,7 @@
 const $=id=>document.getElementById(id);
 const STORAGE='audit-trainer-progress-v1';
 const icons={legislation:'⚖',isa:'◈',intosai:'◇',accounting:'▦',analysis:'⌁'};
-const letters=['A','B','C','D'];
+const letters=['A','B','C','D','E','F','G','H','I'];
 // Only citations checked against official legal texts are allowed in explanations.
 const verifiedNorms={
  'legislation-1':{name:'Бюджетний кодекс України, стаття 22',url:'https://zakon.rada.gov.ua/laws/show/2456-17#Text'},
@@ -14,8 +14,8 @@ const verifiedNorms={
 };
 const normPending='Точне посилання на чинну норму для цього запитання ще не перевірене. Щоб не вводити вас в оману, пояснення без підтвердженого нормативного джерела не надається.';
 function normativeExplanation(q,opt){let norm=verifiedNorms[q.id];if(!norm)return normPending;return (opt.explanation||'') .replace(/\s*(Старий текст PDF[^.]*\.|У попередньому чат-тесті[^.]*\.|Відповідь зі старого PDF[^.]*\.|Застарілий перелік у PDF[^.]*\.)/g,'')+'\n\nНорма: '+norm.name+'\n'+norm.url}
-let data,items=[],activeGroup='legislation',active=0,filter='all',query='',state={answers:{},notes:{},bookmarks:{},font:1};
-let appMode='study',exam=null,examIndex=0;
+let courses=[],course,data,items=[],activeGroup='legislation',active=0,filter='all',query='',state={answers:{},notes:{},bookmarks:{},font:1};
+let appMode='study',exam=null,examIndex=0,examTimer=null;
 const routeMeta={
  catalog:['НАВЧАЛЬНА ПЛАТФОРМА','Каталог напрямів'],
  learning:['КУРС · ДЕРЖАВНА СЛУЖБА','Навчання'],
@@ -42,7 +42,9 @@ function navigate(route,{replace=false,focus=true}={}){
  });
  $('learningNavigation').hidden=route!=='learning';
  document.body.dataset.route=route;
- const [eyebrow,title]=routeMeta[route];
+ let [eyebrow,title]=routeMeta[route];
+ if(course&&route==='learning')eyebrow='КУРС · '+course.code;
+ if(course&&route==='certification')eyebrow='СЕРТИФІКАЦІЯ · '+course.code;
  $('routeEyebrow').textContent=eyebrow;
  $('routeTitle').textContent=title;
  document.title=title+' — TESTS';
@@ -138,7 +140,11 @@ const overrides={
  'legislation-5':{choices:['На всіх членів Рахункової палати та всіх працівників її апарату.','Лише на державних аудиторів апарату.','На інших посадових осіб апарату, крім Секретаря, його заступника, державних аудиторів і радників членів Палати.','Лише на Секретаря Палати та його заступника.'],correct:2,hint:'Закон 2024 року передбачив окремий статус для аудиторів, Секретаря та радників.',explanation:'Стаття 18 Закону «Про Рахункову палату»: інші посадові особи апарату є державними службовцями. Секретар, його заступник, державні аудитори, радники та члени Палати не підпадають під Закон «Про державну службу».',updated:true},
  'legislation-6':{choices:['Законність, незалежність, політична доцільність.','Об’єктивність, гласність, підпорядкованість Уряду.','Безсторонність, неупередженість, комерційна ефективність.','Законність, незалежність, об’єктивність, безсторонність, гласність та неупередженість.'],correct:3,hint:'Рахункова палата повинна здійснювати зовнішній аудит незалежно та неупереджено.',explanation:'Стаття 3 Закону «Про Рахункову палату» закріплює шість принципів: законність, незалежність, об’єктивність, безсторонність, гласність, неупередженість.',updated:true}
 };
-function makeQuiz(q){if(q.missing)return null;if(overrides[q.id])return overrides[q.id];
+function questionExplanation(q,opt){
+ if(q.source)return `Джерело: ${q.source.title}\n${q.source.url}`;
+ return normativeExplanation(q,opt);
+}
+function makeQuiz(q){if(q.missing)return null;if(q.choices?.length)return{choices:q.choices,correct:q.correct,hint:'Проаналізуйте умову та відкиньте варіанти, що їй суперечать.',explanation:q.source?`Джерело: ${q.source.title}`:''};if(overrides[q.id])return overrides[q.id];
  const rng=rnd(q.number*131+q.group.length),others=data.questions.filter(x=>x.group===q.group&&!x.missing&&x.id!==q.id&&x.answer.length>8);
  const correct=short(q.answer,205);let used=new Set([correct.toLowerCase()]);let alternatives=[];
  // Rank genuine alternative source answers for topical similarity. They are
@@ -181,17 +187,17 @@ function render(){renderBlocks();renderStats();let list=currentList(),q=getCurre
  let base=items.filter(x=>activeGroup==='all'||x.group===activeGroup);$('progressBar').style.width=(base.length?100*base.filter(x=>state.answers[x.id]).length/base.filter(x=>!x.missing).length:0)+'%';
  $('prevBtn').disabled=active===0;$('nextBtn').disabled=active>=list.length-1;$('jumpInput').value=q?.number||'';hidePanels();
  if(!q){$('questionText').textContent='У цій вибірці немає запитань.';$('answers').innerHTML='';$('tag').textContent='ПОРОЖНІЙ СПИСОК';$('feedback').hidden=true;return}
- let opt=makeQuiz(q),result=state.answers[q.id];$('tag').textContent='ПИТАННЯ № '+q.number+(q.missing?' · ВІДСУТНЄ':opt.updated?' · ОНОВЛЕНО ЗАКОН':'');$('questionText').textContent=q.question;
+ let opt=makeQuiz(q),result=state.answers[q.id];$('tag').textContent='ПИТАННЯ № '+q.number+(q.missing?' · ВІДСУТНЄ':opt.updated?' · ОНОВЛЕНО ЗАКОН':'');$('questionText').innerHTML=safe(q.question)+(q.image?`<img class="question-image" src="${safe(q.image)}" alt="Ілюстрація до завдання ${q.number}">`:'');
  $('bookmarkBtn').textContent=state.bookmarks[q.id]?'★':'☆';$('bookmarkBtn').classList.toggle('saved',!!state.bookmarks[q.id]);$('bookmarkBtn').onclick=()=>{state.bookmarks[q.id]=!state.bookmarks[q.id];save();render()};
  $('noteInput').value=state.notes[q.id]||'';$('noteInput').oninput=()=>{state.notes[q.id]=$('noteInput').value;save();$('noteSaved').textContent='Збережено в цьому браузері'};
  if(q.missing){$('answers').innerHTML='<div class="empty">Текст цього номера відсутній у навчальних матеріалах. Питання та відповідь не вигадувалися. Ви можете додати коментар або перейти далі.</div>';$('feedback').hidden=true}
  else{
   $('answers').innerHTML=opt.choices.map((txt,i)=>`<button class="answer ${result?(i===opt.correct?'right':i===result.choice?'wrong':''):''}" data-choice="${i}" ${result?'disabled':''}><span class="letter">${letters[i]}</span><span>${safe(txt)}</span></button>`).join('');
   document.querySelectorAll('.answer').forEach(b=>b.onclick=()=>answer(q,Number(b.dataset.choice)));
-  $('feedback').hidden=!result;if(result){$('feedback').className='feedback '+(result.correct?'':'bad');$('feedback').innerHTML=`<strong>${result.correct?'✓ Правильно!':'✕ Не зовсім. Правильний варіант — '+letters[opt.correct]+'.'}</strong><div>${safe(normativeExplanation(q,opt))}</div>`}
+  $('feedback').hidden=!result;if(result){$('feedback').className='feedback '+(result.correct?'':'bad');$('feedback').innerHTML=`<strong>${result.correct?'✓ Правильно!':'✕ Не зовсім. Правильний варіант — '+letters[opt.correct]+'.'}</strong><div>${safe(questionExplanation(q,opt))}</div>`}
  }
  $('hintBtn').onclick=()=>toggle('hintPanel',opt?.hint||'Підказка недоступна для відсутньої картки.');
- $('explainBtn').onclick=()=>toggle('explainPanel',opt?normativeExplanation(q,opt):'Текст запитання відсутній.');
+ $('explainBtn').onclick=()=>toggle('explainPanel',opt?questionExplanation(q,opt):'Текст запитання відсутній.');
  $('sourceBtn').onclick=()=>toggle('sourcePanel',q.missing?'Відсутній початковий текст':q.answer);
 }
 function toggle(id,msg){let el=$(id);if(el.hidden){el.textContent=msg;el.hidden=false}else el.hidden=true}
@@ -274,12 +280,13 @@ function setMode(mode){
  $('examModeBtn').classList.toggle('selected',mode==='exam');
  navigate(mode==='exam'?'certification':'learning');
 }
-function attemptKey(person){return 'civil-service-exam-'+person.toLocaleLowerCase('uk-UA').replace(/\s+/g,'-')}
+function attemptKey(person){return `tests-exam-${course.id}-`+person.toLocaleLowerCase('uk-UA').replace(/\s+/g,'-')}
 function retryDate(person){try{let record=JSON.parse(localStorage.getItem(attemptKey(person))||'null');return record?.nextAllowedAt&&Date.now()<Date.parse(record.nextAllowedAt)?new Date(record.nextAllowedAt):null}catch{return null}}
-function startExam(){let names=['surname','givenName','patronymic'].map(id=>$(id).value.trim().replace(/\s+/g,' '));if(names.some(v=>!v)||names.some(v=>!/^[А-Яа-яІіЇїЄєҐґ’'\- ]+$/.test(v))){$('examSetupError').textContent='Введіть прізвище, ім’я та по батькові українськими літерами.';return}let person=names.join(' '),next=window.testsAccount?.blockedUntil()||retryDate(person);if(next){$('examSetupError').textContent='Повторне тестування буде доступне з '+next.toLocaleString('uk-UA')+'. До цього часу можете навчатися в режимі «Навчання».';return}let available=items.filter(q=>!q.missing);if(available.length<40){$('examSetupError').textContent='Недостатньо питань для тесту.';return}let cards=randomOrder(available).slice(0,40).map(q=>{let base=makeQuiz(q),order=randomOrder([0,1,2,3]);return{q,quiz:{...base,choices:order.map(i=>base.choices[i]),correct:order.indexOf(base.correct)},chosen:null}});exam={person,cards,finished:false,startedAt:new Date().toISOString()};examIndex=0;$('examSetupError').textContent='';setMode('exam')}
-function renderExam(){if(!exam||exam.finished)return;let card=exam.cards[examIndex];$('examPerson').textContent=exam.person;$('examProgress').textContent=`Питання ${examIndex+1} із 40 · Відповіли на ${exam.cards.filter(c=>c.chosen!==null).length}`;$('examProgressBar').style.width=(100*exam.cards.filter(c=>c.chosen!==null).length/40)+'%';$('examQuestion').textContent=card.q.question;$('examAnswers').innerHTML=card.quiz.choices.map((v,i)=>`<button class="answer ${card.chosen===i?'chosen':''}" data-exam-choice="${i}"><span class="letter">${letters[i]}</span><span>${safe(v)}</span></button>`).join('');document.querySelectorAll('[data-exam-choice]').forEach(btn=>btn.onclick=()=>{card.chosen=Number(btn.dataset.examChoice);renderExam()});$('examPrevious').disabled=examIndex===0;$('examNext').hidden=examIndex===39;$('examFinish').hidden=examIndex!==39}
-async function finishExam(){if(!exam)return;let answered=exam.cards.filter(c=>c.chosen!==null).length;if(answered<40&&!confirm(`Ви відповіли на ${answered} із 40 питань. Завершити тест зараз?`))return;let percent=Math.round(100*exam.cards.filter(c=>c.chosen===c.quiz.correct).length/40);if(window.testsAccount?.isLoggedIn()){try{$('examFinish').disabled=true;const serverResult=await window.testsAccount.submitExam(exam.person,exam.cards);percent=serverResult.score;exam.serverId=serverResult.id;if(serverResult.next_allowed_at)exam.nextAllowedAt=new Date(serverResult.next_allowed_at*1000).toISOString()}catch(err){$('examSetupError').textContent='Не вдалося зберегти результат: '+err.message;alert('Помилка збереження результату: '+err.message);$('examFinish').disabled=false;return}finally{$('examFinish').disabled=false}}exam.finished=true;exam.completedAt=new Date().toISOString();if(percent<70){let next=exam.nextAllowedAt?new Date(exam.nextAllowedAt):new Date(Date.now()+15*86400000);exam.nextAllowedAt=next.toISOString();try{localStorage.setItem(attemptKey(exam.person),JSON.stringify({score:percent,failedAt:exam.completedAt,nextAllowedAt:exam.nextAllowedAt}))}catch{}}else{try{localStorage.removeItem(attemptKey(exam.person))}catch{}}setMode('exam')}
-function renderResult(){if(!exam?.finished)return;let correct=exam.cards.filter(c=>c.chosen===c.quiz.correct).length,wrong=40-correct,percent=Math.round(correct/40*100),passed=percent>=70;$('resultPerson').textContent=exam.person;$('resultScore').textContent=`${correct} / 40 · ${percent} балів зі 100`;$('certificateKind').textContent=passed?'НАВЧАЛЬНИЙ СЕРТИФІКАТ':'ДОВІДКА ПРО РЕЗУЛЬТАТ';$('resultVerdict').textContent=passed?'✓ Тестування успішно пройдено':'✕ Тестування не пройдено';$('resultDetails').textContent=`Правильних відповідей: ${correct}. Помилок і пропусків: ${wrong}. Прохідний бал: 70 зі 100.`;$('resultDate').textContent='Дата: '+new Date(exam.completedAt).toLocaleString('uk-UA');$('retakeInfo').textContent=passed?'Можна пройти новий тест для тренування.':'Повторне сертифікаційне тестування доступне з '+new Date(exam.nextAllowedAt).toLocaleString('uk-UA')+'.';$('newExam').disabled=!passed;
+function startExam(){let names=['surname','givenName','patronymic'].map(id=>$(id).value.trim().replace(/\s+/g,' '));if(names.some(v=>!v)||names.some(v=>!/^[А-Яа-яІіЇїЄєҐґ’'\- ]+$/.test(v))){$('examSetupError').textContent='Введіть прізвище, ім’я та по батькові українськими літерами.';return}let person=names.join(' '),next=window.testsAccount?.blockedUntil(course.id)||retryDate(person);if(next){$('examSetupError').textContent='Повторне тестування буде доступне з '+next.toLocaleString('uk-UA')+'. До цього часу можете навчатися в режимі «Навчання».';return}let available=items.filter(q=>!q.missing),size=course.examSize;if(available.length<size){$('examSetupError').textContent='Недостатньо питань для тесту.';return}let cards=randomOrder(available).slice(0,size).map(q=>{let base=makeQuiz(q),order=randomOrder(base.choices.map((_,i)=>i));return{q,quiz:{...base,choices:order.map(i=>base.choices[i]),correct:order.indexOf(base.correct)},chosen:null}});exam={courseId:course.id,person,cards,finished:false,startedAt:new Date().toISOString(),deadline:course.timeLimitMinutes?Date.now()+course.timeLimitMinutes*60000:null};examIndex=0;$('examSetupError').textContent='';startExamClock();setMode('exam')}
+function startExamClock(){clearInterval(examTimer);if(!exam?.deadline)return;examTimer=setInterval(()=>{if(!exam||exam.finished){clearInterval(examTimer);return}if(Date.now()>=exam.deadline){clearInterval(examTimer);finishExam(true);return}renderExam()},1000)}
+function renderExam(){if(!exam||exam.finished)return;let card=exam.cards[examIndex],size=exam.cards.length,answered=exam.cards.filter(c=>c.chosen!==null).length,time='';if(exam.deadline){let left=Math.max(0,exam.deadline-Date.now()),minutes=Math.floor(left/60000),seconds=Math.floor(left%60000/1000);time=` · ${minutes}:${String(seconds).padStart(2,'0')}`}$('examPerson').textContent=exam.person;$('examProgress').textContent=`Питання ${examIndex+1} із ${size} · Відповіли на ${answered}${time}`;$('examProgressBar').style.width=(100*answered/size)+'%';$('examQuestion').innerHTML=safe(card.q.question)+(card.q.image?`<img class="question-image" src="${safe(card.q.image)}" alt="Ілюстрація до завдання ${card.q.number}">`:'');$('examAnswers').innerHTML=card.quiz.choices.map((v,i)=>`<button class="answer ${card.chosen===i?'chosen':''}" data-exam-choice="${i}"><span class="letter">${letters[i]}</span><span>${safe(v)}</span></button>`).join('');document.querySelectorAll('[data-exam-choice]').forEach(btn=>btn.onclick=()=>{card.chosen=Number(btn.dataset.examChoice);renderExam()});$('examPrevious').disabled=examIndex===0;$('examNext').hidden=examIndex===size-1;$('examFinish').hidden=examIndex!==size-1}
+async function finishExam(forced=false){if(!exam)return;let size=exam.cards.length,answered=exam.cards.filter(c=>c.chosen!==null).length;if(!forced&&answered<size&&!confirm(`Ви відповіли на ${answered} із ${size} питань. Завершити тест зараз?`))return;clearInterval(examTimer);let correct=exam.cards.filter(c=>c.chosen===c.quiz.correct).length,percent=Math.round(100*correct/size),passed=correct>=(course.passCorrect||Math.ceil(size*course.passPercent/100));if(window.testsAccount?.isLoggedIn()){try{$('examFinish').disabled=true;const serverResult=await window.testsAccount.submitExam(course.id,exam.person,exam.cards);percent=serverResult.score;passed=serverResult.passed;exam.serverId=serverResult.id;if(serverResult.next_allowed_at)exam.nextAllowedAt=new Date(serverResult.next_allowed_at*1000).toISOString()}catch(err){$('examSetupError').textContent='Не вдалося зберегти результат: '+err.message;alert('Помилка збереження результату: '+err.message);$('examFinish').disabled=false;return}finally{$('examFinish').disabled=false}}exam.finished=true;exam.completedAt=new Date().toISOString();exam.passed=passed;if(!passed){let next=exam.nextAllowedAt?new Date(exam.nextAllowedAt):new Date(Date.now()+15*86400000);exam.nextAllowedAt=next.toISOString();try{localStorage.setItem(attemptKey(exam.person),JSON.stringify({score:percent,failedAt:exam.completedAt,nextAllowedAt:exam.nextAllowedAt}))}catch{}}else{try{localStorage.removeItem(attemptKey(exam.person))}catch{}}setMode('exam')}
+function renderResult(){if(!exam?.finished)return;let size=exam.cards.length,correct=exam.cards.filter(c=>c.chosen===c.quiz.correct).length,wrong=size-correct,percent=Math.round(correct/size*100),threshold=course.passCorrect||Math.ceil(size*course.passPercent/100),passed=exam.passed??correct>=threshold;$('resultPerson').textContent=exam.person;$('resultScore').textContent=`${correct} / ${size} · ${percent} балів зі 100`;$('certificateKind').textContent=passed?'НАВЧАЛЬНИЙ СЕРТИФІКАТ':'ДОВІДКА ПРО РЕЗУЛЬТАТ';$('certificateTitle').textContent=course.certificateTitle;$('certificateDisclaimer').textContent=course.disclaimer;$('certificate').dataset.course=course.id;$('resultVerdict').textContent=passed?'✓ Тестування успішно пройдено':'✕ Тестування не пройдено';$('resultDetails').textContent=`Правильних відповідей: ${correct}. Помилок і пропусків: ${wrong}. Прохідний результат: ${threshold} із ${size}.`;$('resultDate').textContent='Дата: '+new Date(exam.completedAt).toLocaleString('uk-UA');$('retakeInfo').textContent=passed?'Можна пройти новий тест для тренування.':'Повторне сертифікаційне тестування доступне з '+new Date(exam.nextAllowedAt).toLocaleString('uk-UA')+'.';$('newExam').disabled=!passed;
 const verification=$('examVerification');
 if(exam.serverId){
   const id=encodeURIComponent(exam.serverId);
@@ -289,7 +296,7 @@ if(exam.serverId){
   verification.hidden=true;
   verification.replaceChildren();
 }
-$('examReview').hidden=true;$('examReview').innerHTML=exam.cards.map((c,i)=>{let right=c.chosen===c.quiz.correct;return `<div class="review-item"><strong>${i+1}. ${safe(c.q.question)}</strong><p class="${right?'good':'bad-text'}">${right?'✓ Правильно':'✕ Помилка або пропуск'} · Правильна відповідь: ${letters[c.quiz.correct]}. ${safe(c.quiz.choices[c.quiz.correct])}</p><p>${safe(normativeExplanation(c.q,c.quiz))}</p></div>`}).join('')}
+$('examReview').hidden=true;$('examReview').innerHTML=exam.cards.map((c,i)=>{let right=c.chosen===c.quiz.correct;return `<div class="review-item"><strong>${i+1}. ${safe(c.q.question)}</strong><p class="${right?'good':'bad-text'}">${right?'✓ Правильно':'✕ Помилка або пропуск'} · Правильна відповідь: ${letters[c.quiz.correct]}. ${safe(c.quiz.choices[c.quiz.correct])}</p><p>${safe(questionExplanation(c.q,c.quiz))}</p></div>`}).join('')}
 async function printExamCertificate(){
   const source=$('certificate');
   if(!source)return;
@@ -316,7 +323,7 @@ async function printExamCertificate(){
   }
 }
 
-function initializeExam(){let count=items.filter(q=>!q.missing).length;$('totalQuestionCount').textContent=count.toLocaleString('uk-UA');$('studyModeBtn').onclick=()=>setMode('study');$('examModeBtn').onclick=()=>setMode('exam');$('startExam').onclick=startExam;$('examPrevious').onclick=()=>{if(examIndex>0){examIndex--;renderExam()}};$('examNext').onclick=()=>{if(examIndex<39){examIndex++;renderExam()}};$('examFinish').onclick=finishExam;$('reviewMistakes').onclick=()=>{$('examReview').hidden=!$('examReview').hidden};$('newExam').onclick=()=>{exam=null;setMode('exam')};$('printCertificate').onclick=printExamCertificate;$('testSound').onclick=async()=>{
+function initializeExam(){let count=items.filter(q=>!q.missing).length,size=course.examSize,threshold=course.passCorrect||Math.ceil(size*course.passPercent/100);$('totalQuestionCount').textContent=count.toLocaleString('uk-UA');$('examQuestionCount').textContent=size;$('examQuestionCountSetup').textContent=size;$('examThreshold').textContent=`${threshold} із ${size}`;$('examTimeRule').textContent=course.timeLimitMinutes?`${course.timeLimitMinutes} хвилин`:'не обмежено';$('studyModeBtn').onclick=()=>setMode('study');$('examModeBtn').onclick=()=>setMode('exam');$('startExam').onclick=startExam;$('examPrevious').onclick=()=>{if(examIndex>0){examIndex--;renderExam()}};$('examNext').onclick=()=>{if(examIndex<exam.cards.length-1){examIndex++;renderExam()}};$('examFinish').onclick=()=>finishExam(false);$('reviewMistakes').onclick=()=>{$('examReview').hidden=!$('examReview').hidden};$('newExam').onclick=()=>{exam=null;setMode('exam')};$('printCertificate').onclick=printExamCertificate;$('testSound').onclick=async()=>{
   stop();
   const token=speechGeneration;
   const phrase='Вітаю! Перевіряємо українське озвучення. Слухайте, будь ласка, природне звучання голосу.';
@@ -337,17 +344,38 @@ function initializeExam(){let count=items.filter(q=>!q.missing).length;$('totalQ
     catch(e){if(token===speechGeneration)setSpeechStatus('Голосовий тест не пройдено: '+e.message);}
   }
 }}
+async function loadCourse(courseId,{go=true}={}){
+ const selected=courses.find(item=>item.id===courseId)||courses[0];
+ const response=await fetch(selected.file,{cache:'no-store'});
+ if(!response.ok)throw Error('Не вдалося завантажити напрям: '+response.status);
+ course=selected;data=await response.json();items=data.questions;activeGroup=data.groups[0]?.id||'all';active=0;filter='all';query='';exam=null;clearInterval(examTimer);
+ try{localStorage.setItem('tests-active-course-v1',course.id)}catch{}
+ $('courseHeaderEyebrow').textContent='КУРС · '+course.code;
+ $('courseHeaderTitle').textContent=course.title;
+ $('courseHeaderDescription').textContent=course.description;
+ $('certHeaderEyebrow').textContent='СЕРТИФІКАЦІЯ · '+course.code;
+ $('certHeaderTitle').textContent=course.certificateTitle;
+ $('sourceNotice').textContent=course.disclaimer;
+ renderCourseCatalog();render();initializeExam();
+ if(go)navigate('learning');
+}
+function renderCourseCatalog(){
+ $('courseGrid').innerHTML=courses.map(item=>`<article class="course-card ${course?.id===item.id?'featured':''}" data-course="${safe((item.code+' '+item.title).toLocaleLowerCase('uk-UA'))}"><div class="course-card-top"><span class="course-code">${safe(item.code)}</span><span class="active-pill">Доступно</span></div><div class="course-glyph" aria-hidden="true">${safe(item.glyph)}</div><h3>${safe(item.title)}</h3><p>${safe(item.description)}</p><div class="course-card-stats"><span><strong>${item.questionCount}</strong> питань</span><span><strong>${item.examSize}</strong> в іспиті</span></div><button class="text-button" type="button" data-select-course="${safe(item.id)}">Відкрити напрям →</button></article>`).join('');
+ document.querySelectorAll('[data-select-course]').forEach(button=>button.onclick=()=>loadCourse(button.dataset.selectCourse));
+}
 async function init(){
  applyPrefs();
- let response=await fetch('questions.json');data=await response.json();items=data.questions;
+ courses=await (await fetch('courses.json',{cache:'no-store'})).json();
+ let savedCourse='audit';try{savedCourse=localStorage.getItem('tests-active-course-v1')||savedCourse}catch{}
+ course=courses.find(item=>item.id===savedCourse)||courses[0];
+ let response=await fetch(course.file,{cache:'no-store'});data=await response.json();items=data.questions;activeGroup=data.groups[0]?.id||'all';
+ $('courseHeaderEyebrow').textContent='КУРС · '+course.code;$('courseHeaderTitle').textContent=course.title;$('courseHeaderDescription').textContent=course.description;$('certHeaderEyebrow').textContent='СЕРТИФІКАЦІЯ · '+course.code;$('certHeaderTitle').textContent=course.certificateTitle;$('sourceNotice').textContent=course.disclaimer;
  if(prefs.rememberTopic){try{
   const stored=localStorage.getItem('tests-last-topic');
   if(stored==='all'||data.groups.some(g=>g.id===stored))activeGroup=stored;
  }catch{}}
  await window.testsAccount?.setup(serverProgress=>{state={...state,...serverProgress};try{localStorage.setItem(STORAGE,JSON.stringify(state))}catch{};render()});
- render();initializeExam();
- $('catalogQuestionCount').textContent=items.filter(q=>!q.missing).length.toLocaleString('uk-UA');
- $('catalogTopicCount').textContent=data.groups.length;
+ renderCourseCatalog();render();initializeExam();
  document.querySelectorAll('[data-route]').forEach(button=>button.onclick=()=>navigate(button.dataset.route));
  document.querySelectorAll('[data-course-action]').forEach(button=>button.onclick=()=>navigate(button.dataset.courseAction));
  $('courseSearch').oninput=event=>{

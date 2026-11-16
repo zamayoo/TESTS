@@ -1,0 +1,606 @@
+{
+  "groups": [
+    {
+      "id": "logic",
+      "title": "Логічні задачі"
+    },
+    {
+      "id": "numeric",
+      "title": "Числові закономірності"
+    },
+    {
+      "id": "visual",
+      "title": "Візуальні матриці"
+    }
+  ],
+  "questions": [
+    {
+      "id": "analytical-01",
+      "number": 1,
+      "group": "visual",
+      "question": "Оберіть правильну фігуру з шести пронумерованих:",
+      "answer": "3",
+      "choices": [
+        "4",
+        "6",
+        "1",
+        "3",
+        "2",
+        "5"
+      ],
+      "correct": 3,
+      "image": "assets/operational/test-1.jpg",
+      "source": {
+        "title": "Зразок тесту Служби зовнішньої розвідки України",
+        "url": "https://szru.gov.ua/download/faq/2_test_analitic.pdf"
+      }
+    },
+    {
+      "id": "analytical-02",
+      "number": 2,
+      "group": "numeric",
+      "question": "Продовжите числовий ряд: 24, 21, 19, 18, 15, 13, 12, …",
+      "answer": "9",
+      "choices": [
+        "10",
+        "9",
+        "16"
+      ],
+      "correct": 1,
+      "image": null,
+      "source": {
+        "title": "Зразок тесту Служби зовнішньої розвідки України",
+        "url": "https://szru.gov.ua/download/faq/2_test_analitic.pdf"
+      }
+    },
+    {
+      "id": "analytical-03",
+      "number": 3,
+      "group": "logic",
+      "question": "Використовуючи лише інформацію, яка є в тексті вихідного твердження, підберіть вірний варіант. Читайте їх уважно і порівнюйте кожен із вихідним твердженням, чи не протирічить він твердженню: Кожен трикутник квадратний. Всі трикутники помаранчеві",
+      "answer": "жодне",
+      "choices": [
+        "бувають трикутники з помаранчевими кутами",
+        "бувають трикутники з квадратними кутами",
+        "кути і трикутники – квадратні і помаранчеві",
+        "бувають трикутні помаранчеві кути",
+        "жодне"
+      ],
+      "correct": 4,
+      "image": null,
+      "source": {
+        "title": "Зразок тесту Служби зовнішньої розвідки України",
+        "url": "https://szru.gov.ua/download/faq/2_test_analitic.pdf"
+      }
+    },
+    {
+      "id": "analytical-04",
+      "number": 4,
+      "group": "logic",
+      "question": "Брауну, Джонсу і Сміту пред’явлено звинувачення в співучасті в пограбуванні банку. Викрадачі втекли на автомобілі, що їх очікував. Під час слідства Браун засвідчив, що злочинці були на синьому “Бьюїку”; Джонс сказав, що це був чорний “Крайслер”, а Сміт стверджував, що це був “Форд Мустанг” і ні в якому разі не синій. Стало відомо, що бажаючи заплутати слідство, кожен з них вказав правильно або лише марку машини, або її колір. Якого кольору був автомобіль і якої марки?",
+      "answer": "Чорний “Бьюїк”",
+      "choices": [
+        "Синій “Бьюїк”",
+        "Синій “Форд Мустанг”",
+        "Синій “Крайслер”",
+        "Чорний “Бьюїк”",
+        "Чорний “Форд Мустанг”",
+        "Чорний “Крайслер”"
+      ],
+      "correct": 3,
+      "image": null,
+      "source": {
+        "title": "Зразок тесту Служби зовнішньої розвідки України",
+        "url": "https://szru.gov.ua/download/faq/2_test_analitic.pdf"
+      }
+    },
+    {
+      "id": "analytical-05",
+      "number": 5,
+      "group": "numeric",
+      "question": "Вставте пропущене число: 368 ( 9 ) 215 444 ( ? ) 182",
+      "answer": "5",
+      "choices": [
+        "7",
+        "5",
+        "10",
+        "8"
+      ],
+      "correct": 1,
+      "image": null,
+      "source": {
+        "title": "Зразок тесту Служби зовнішньої розвідки України",
+        "url": "https://szru.gov.ua/download/faq/2_test_analitic.pdf"
+      }
+    },
+    {
+      "id": "analytical-06",
+      "number": 6,
+      "group": "numeric",
+      "question": "Сплав складається з двох частин срібла та трьох частин олова. Скільки грамів олова потрібно для одержання 15 г сплаву?",
+      "answer": "9",
+      "choices": [
+        "9",
+        "5",
+        "3",
+        "8"
+      ],
+      "correct": 0,
+      "image": null,
+      "source": {
+        "title": "Зразок тесту Служби зовнішньої розвідки України",
+        "url": "https://szru.gov.ua/download/faq/2_test_analitic.pdf"
+      }
+    },
+    {
+      "id": "analytical-07",
+      "number": 7,
+      "group": "numeric",
+      "question": "Дріт довжиною 48 см після нагрівання подовжується до 52 см. Якої довжини після нагрівання буде дріт довжиною 72 см?",
+      "answer": "84",
+      "choices": [
+        "89",
+        "84",
+        "85",
+        "83"
+      ],
+      "correct": 1,
+      "image": null,
+      "source": {
+        "title": "Зразок тесту Служби зовнішньої розвідки України",
+        "url": "https://szru.gov.ua/download/faq/2_test_analitic.pdf"
+      }
+    },
+    {
+      "id": "analytical-08",
+      "number": 8,
+      "group": "numeric",
+      "question": "Продовжите числовий ряд: 10, 12, 9, 11, 8, 10, …",
+      "answer": "7",
+      "choices": [
+        "7",
+        "8",
+        "6",
+        "9"
+      ],
+      "correct": 0,
+      "image": null,
+      "source": {
+        "title": "Зразок тесту Служби зовнішньої розвідки України",
+        "url": "https://szru.gov.ua/download/faq/2_test_analitic.pdf"
+      }
+    },
+    {
+      "id": "analytical-09",
+      "number": 9,
+      "group": "visual",
+      "question": "Вставте пропущене число:",
+      "answer": "6",
+      "choices": [
+        "7",
+        "5",
+        "8",
+        "6"
+      ],
+      "correct": 3,
+      "image": "assets/operational/test-2.jpg",
+      "source": {
+        "title": "Зразок тесту Служби зовнішньої розвідки України",
+        "url": "https://szru.gov.ua/download/faq/2_test_analitic.pdf"
+      }
+    },
+    {
+      "id": "analytical-10",
+      "number": 10,
+      "group": "numeric",
+      "question": "Яке число пропущене в наступній послідовності? 85, 110, 135, 160, 185, 210, 235, 260, ... , 310",
+      "answer": "285",
+      "choices": [
+        "284",
+        "290",
+        "285",
+        "286"
+      ],
+      "correct": 2,
+      "image": null,
+      "source": {
+        "title": "Зразок тесту Служби зовнішньої розвідки України",
+        "url": "https://szru.gov.ua/download/faq/2_test_analitic.pdf"
+      }
+    },
+    {
+      "id": "analytical-11",
+      "number": 11,
+      "group": "logic",
+      "question": "Використовуючи лише інформацію, яка є в тексті вихідного твердження, підберіть вірний варіант. Читайте їх уважно і порівнюйте кожен із вихідним твердженням, чи не протирічить він твердженню: \"Всі лебеді не уміють повзати. У всіх лебедів є квитки.\"",
+      "answer": "всі лебеді, в яких є квитки, не можуть повзати",
+      "choices": [
+        "лебеді не можуть повзати, тому що у них є квитки",
+        "лебеді не можуть повзати і у них немає квитків",
+        "деякі лебеді не мають квитків",
+        "жодне",
+        "без квитків лебеді не можуть повзати",
+        "всі лебеді, в яких є квитки, не можуть повзати"
+      ],
+      "correct": 5,
+      "image": null,
+      "source": {
+        "title": "Зразок тесту Служби зовнішньої розвідки України",
+        "url": "https://szru.gov.ua/download/faq/2_test_analitic.pdf"
+      }
+    },
+    {
+      "id": "analytical-12",
+      "number": 12,
+      "group": "logic",
+      "question": "У одному класі вчаться три учні: Іван, Петро і Сергій. Якось вчителька запідозрила, що один з них підклав їй на стілець канцелярську кнопку. Іван сказав, що він це зробив, а Петро не винен. Петро сказав, що Іван не винен, а винен Сергій. Сергій сказав, що він не винен, а винен у всьому Іван. Хто винен? Відомо, що один з цієї трійці відмінник і завжди говорить правду. Інший – двієчник, завжди говорить неправду. Третій хлопчик – дуже обережний, він чергує правду з брехнею. Хлопчики між собою не товаришують, тому вчителька знає, що хтось зробив це сам.",
+      "answer": "Сергій",
+      "choices": [
+        "Іван",
+        "Сергій",
+        "Петро",
+        "Ніхто з них"
+      ],
+      "correct": 1,
+      "image": null,
+      "source": {
+        "title": "Зразок тесту Служби зовнішньої розвідки України",
+        "url": "https://szru.gov.ua/download/faq/2_test_analitic.pdf"
+      }
+    },
+    {
+      "id": "analytical-13",
+      "number": 13,
+      "group": "numeric",
+      "question": "Яке число пропущене в наступній послідовності? -7, -5, -30, -27, -53, -49, -76, -71, -99, ...",
+      "answer": "-93",
+      "choices": [
+        "-92",
+        "-94",
+        "-88",
+        "-93"
+      ],
+      "correct": 3,
+      "image": null,
+      "source": {
+        "title": "Зразок тесту Служби зовнішньої розвідки України",
+        "url": "https://szru.gov.ua/download/faq/2_test_analitic.pdf"
+      }
+    },
+    {
+      "id": "analytical-14",
+      "number": 14,
+      "group": "visual",
+      "question": "Оберіть правильну фігуру з шести пронумерованих:",
+      "answer": "4",
+      "choices": [
+        "1",
+        "3",
+        "2",
+        "4",
+        "5",
+        "6"
+      ],
+      "correct": 3,
+      "image": "assets/operational/test-3.jpg",
+      "source": {
+        "title": "Зразок тесту Служби зовнішньої розвідки України",
+        "url": "https://szru.gov.ua/download/faq/2_test_analitic.pdf"
+      }
+    },
+    {
+      "id": "analytical-15",
+      "number": 15,
+      "group": "numeric",
+      "question": "Яке число пропущене в наступній послідовності? 193, 168, 143, 118, ... , 68, 43, 18, -7, -32",
+      "answer": "93",
+      "choices": [
+        "98",
+        "93",
+        "94",
+        "92"
+      ],
+      "correct": 1,
+      "image": null,
+      "source": {
+        "title": "Зразок тесту Служби зовнішньої розвідки України",
+        "url": "https://szru.gov.ua/download/faq/2_test_analitic.pdf"
+      }
+    },
+    {
+      "id": "analytical-16",
+      "number": 16,
+      "group": "visual",
+      "question": "Виключте зайву фігуру",
+      "answer": "4",
+      "choices": [
+        "3",
+        "2",
+        "4",
+        "1",
+        "5"
+      ],
+      "correct": 2,
+      "image": "assets/operational/test-4.jpg",
+      "source": {
+        "title": "Зразок тесту Служби зовнішньої розвідки України",
+        "url": "https://szru.gov.ua/download/faq/2_test_analitic.pdf"
+      }
+    },
+    {
+      "id": "analytical-17",
+      "number": 17,
+      "group": "numeric",
+      "question": "Яке число пропущене в наступній послідовності? -21, -18, -47, -31, ... -44, -99, -57, -125, -70",
+      "answer": "-73",
+      "choices": [
+        "-72",
+        "-74",
+        "-68",
+        "-73"
+      ],
+      "correct": 3,
+      "image": null,
+      "source": {
+        "title": "Зразок тесту Служби зовнішньої розвідки України",
+        "url": "https://szru.gov.ua/download/faq/2_test_analitic.pdf"
+      }
+    },
+    {
+      "id": "analytical-18",
+      "number": 18,
+      "group": "logic",
+      "question": "Під час перерви в класі були лише Ганна, Петро, Іван і Галина. Точно відомо, що один з них розбив вікно. Вчитель став їх запитувати і отримав від кожного по три відповіді. Ганна: – Я його не розбивала. – Я сиділа і читала. – Галина знає, хто розбив. Петро: – Я цього не робив. – З Галею я давно не розмовляю. – Це зробив Іван. Іван: – Я невинен. – Розбила Галина. – Петро бреше, кажучи, що розбив я. Галина: – Я не розбивала вікно. – Це провина Ганни. – Петро знає, що я не винна, тому що ми з ним розмовляли під час перерви. Врешті-решт кожен з них признався, що з трьох відповідей, які були надані, дві достеменні, а одна помилкова. Хто розбив вікно?",
+      "answer": "Ганна",
+      "choices": [
+        "Іван",
+        "Галина",
+        "Ганна",
+        "Петро"
+      ],
+      "correct": 2,
+      "image": null,
+      "source": {
+        "title": "Зразок тесту Служби зовнішньої розвідки України",
+        "url": "https://szru.gov.ua/download/faq/2_test_analitic.pdf"
+      }
+    },
+    {
+      "id": "analytical-19",
+      "number": 19,
+      "group": "numeric",
+      "question": "Яке число пропущене в наступній послідовності? 71, 64, 57, 50, 43, 36, ... , 22, 15, 8",
+      "answer": "29",
+      "choices": [
+        "34",
+        "29",
+        "30",
+        "28"
+      ],
+      "correct": 1,
+      "image": null,
+      "source": {
+        "title": "Зразок тесту Служби зовнішньої розвідки України",
+        "url": "https://szru.gov.ua/download/faq/2_test_analitic.pdf"
+      }
+    },
+    {
+      "id": "analytical-20",
+      "number": 20,
+      "group": "visual",
+      "question": "Виключите зайву фігуру",
+      "answer": "1",
+      "choices": [
+        "2",
+        "4",
+        "3",
+        "5",
+        "1"
+      ],
+      "correct": 4,
+      "image": "assets/operational/test-5.jpg",
+      "source": {
+        "title": "Зразок тесту Служби зовнішньої розвідки України",
+        "url": "https://szru.gov.ua/download/faq/2_test_analitic.pdf"
+      }
+    },
+    {
+      "id": "analytical-21",
+      "number": 21,
+      "group": "visual",
+      "question": "Вставте число, якого не вистачає",
+      "answer": "5",
+      "choices": [
+        "6",
+        "4",
+        "7",
+        "5"
+      ],
+      "correct": 3,
+      "image": "assets/operational/test-6.jpg",
+      "source": {
+        "title": "Зразок тесту Служби зовнішньої розвідки України",
+        "url": "https://szru.gov.ua/download/faq/2_test_analitic.pdf"
+      }
+    },
+    {
+      "id": "analytical-22",
+      "number": 22,
+      "group": "visual",
+      "question": "Виключите зайву фігуру",
+      "answer": "3",
+      "choices": [
+        "5",
+        "3",
+        "1",
+        "2",
+        "4"
+      ],
+      "correct": 1,
+      "image": "assets/operational/test-7.jpg",
+      "source": {
+        "title": "Зразок тесту Служби зовнішньої розвідки України",
+        "url": "https://szru.gov.ua/download/faq/2_test_analitic.pdf"
+      }
+    },
+    {
+      "id": "analytical-23",
+      "number": 23,
+      "group": "numeric",
+      "question": "Яке число пропущене в наступній послідовності? 84, 81, 59, 107, 34, ... , 9, 159, -16, 185",
+      "answer": "133",
+      "choices": [
+        "138",
+        "133",
+        "134",
+        "132"
+      ],
+      "correct": 1,
+      "image": null,
+      "source": {
+        "title": "Зразок тесту Служби зовнішньої розвідки України",
+        "url": "https://szru.gov.ua/download/faq/2_test_analitic.pdf"
+      }
+    },
+    {
+      "id": "analytical-24",
+      "number": 24,
+      "group": "visual",
+      "question": "Виключите зайву фігуру",
+      "answer": "5",
+      "choices": [
+        "3",
+        "1",
+        "4",
+        "2",
+        "5"
+      ],
+      "correct": 4,
+      "image": "assets/operational/test-8.jpg",
+      "source": {
+        "title": "Зразок тесту Служби зовнішньої розвідки України",
+        "url": "https://szru.gov.ua/download/faq/2_test_analitic.pdf"
+      }
+    },
+    {
+      "id": "analytical-25",
+      "number": 25,
+      "group": "numeric",
+      "question": "Продовжіть числовий ряд: 15, 13, 16, 12, 17, 11, …",
+      "answer": "18",
+      "choices": [
+        "19",
+        "17",
+        "20",
+        "18"
+      ],
+      "correct": 3,
+      "image": null,
+      "source": {
+        "title": "Зразок тесту Служби зовнішньої розвідки України",
+        "url": "https://szru.gov.ua/download/faq/2_test_analitic.pdf"
+      }
+    },
+    {
+      "id": "analytical-26",
+      "number": 26,
+      "group": "visual",
+      "question": "Виключіть зайву фігуру",
+      "answer": "4",
+      "choices": [
+        "2",
+        "1",
+        "4",
+        "5",
+        "3"
+      ],
+      "correct": 2,
+      "image": "assets/operational/test-9.jpg",
+      "source": {
+        "title": "Зразок тесту Служби зовнішньої розвідки України",
+        "url": "https://szru.gov.ua/download/faq/2_test_analitic.pdf"
+      }
+    },
+    {
+      "id": "analytical-27",
+      "number": 27,
+      "group": "numeric",
+      "question": "Продовжите числовий ряд: 1, 2, 6, 15, 31, 56, …",
+      "answer": "92",
+      "choices": [
+        "97",
+        "92",
+        "93",
+        "91"
+      ],
+      "correct": 1,
+      "image": null,
+      "source": {
+        "title": "Зразок тесту Служби зовнішньої розвідки України",
+        "url": "https://szru.gov.ua/download/faq/2_test_analitic.pdf"
+      }
+    },
+    {
+      "id": "analytical-28",
+      "number": 28,
+      "group": "visual",
+      "question": "Виключіть зайву фігуру",
+      "answer": "8",
+      "choices": [
+        "5",
+        "1",
+        "8",
+        "9",
+        "2",
+        "6",
+        "7",
+        "3",
+        "4"
+      ],
+      "correct": 2,
+      "image": "assets/operational/test-10.jpg",
+      "source": {
+        "title": "Зразок тесту Служби зовнішньої розвідки України",
+        "url": "https://szru.gov.ua/download/faq/2_test_analitic.pdf"
+      }
+    },
+    {
+      "id": "analytical-29",
+      "number": 29,
+      "group": "numeric",
+      "question": "Продовжите числовий ряд: 255, 127, 63, 31, 15, 7, …",
+      "answer": "3",
+      "choices": [
+        "4",
+        "2",
+        "5",
+        "3"
+      ],
+      "correct": 3,
+      "image": null,
+      "source": {
+        "title": "Зразок тесту Служби зовнішньої розвідки України",
+        "url": "https://szru.gov.ua/download/faq/2_test_analitic.pdf"
+      }
+    },
+    {
+      "id": "analytical-30",
+      "number": 30,
+      "group": "numeric",
+      "question": "Продовжите числовий ряд: 54, 19, 18, 14, 6, 9, …",
+      "answer": "2",
+      "choices": [
+        "1",
+        "4",
+        "2",
+        "3"
+      ],
+      "correct": 2,
+      "image": null,
+      "source": {
+        "title": "Зразок тесту Служби зовнішньої розвідки України",
+        "url": "https://szru.gov.ua/download/faq/2_test_analitic.pdf"
+      }
+    }
+  ]
+}

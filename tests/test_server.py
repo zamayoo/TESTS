@@ -75,10 +75,12 @@ class AccountTests(unittest.TestCase):
             con.execute('INSERT INTO demo_certificates VALUES (?,?,?)',
                         (user_id,'DEMO-ABCD1234ABCD1234ABCD1234',backend.now()))
             real_id='1234567890abcdef1234567890abcdef'
-            con.execute('INSERT INTO certificates VALUES (?,?,?,?,?,?,?,?)',
-                        (real_id,user_id,'Тестовий Учень',80,32,1,backend.now(),None))
+            con.execute('''INSERT INTO certificates
+                (id,user_id,name,course_id,score,correct,passed,created_at,next_allowed_at)
+                VALUES (?,?,?,?,?,?,?,?,?)''',
+                        (real_id,user_id,'Тестовий Учень','audit',80,32,1,backend.now(),None))
         try:
-            demo=self.client.get('/api/certificates/verify/DEMO-TESTS-2197')
+            demo=self.client.get('/api/certificates/verify/DEMO-ABCD1234ABCD1234ABCD1234')
             self.assertEqual(demo.status_code,200)
             self.assertEqual(demo.json()['type'],'demo')
             self.assertFalse(demo.json()['passed'])
@@ -161,7 +163,36 @@ class AccountTests(unittest.TestCase):
         self.assertEqual(response.status_code,200,response.text)
         self.assertEqual(response.json()['score'],100)
         self.assertTrue(response.json()['passed'])
-        self.assertEqual(len(self.client.get('/api/me').json()['certificates']),1)
+        certificates=self.client.get('/api/me').json()['certificates']
+        self.assertEqual(len([item for item in certificates if item['course_id']=='audit']),1)
+
+    def test_z_each_new_course_is_scored_with_its_own_rules(self):
+        backend = self.backend
+        for course_id in ('analytical', 'procurement'):
+            course = backend.courses[course_id]
+            selected = list(backend.questions_by_course[course_id].values())[:course['examSize']]
+            answers = [{'id': q['id'], 'answer': q['choices'][q['correct']]} for q in selected]
+            response = self.client.post('/api/exams', json={
+                'course_id': course_id,
+                'name': 'Замай Олег Олегович',
+                'answers': answers,
+            })
+            self.assertEqual(response.status_code, 200, response.text)
+            self.assertEqual(response.json()['score'], 100)
+            self.assertTrue(response.json()['passed'])
+            verified = self.client.get('/api/certificates/verify/' + response.json()['id']).json()
+            self.assertEqual(verified['course_id'], course_id)
+            self.assertEqual(verified['total'], course['examSize'])
+
+    def test_course_datasets_are_complete_and_answers_are_valid(self):
+        backend = self.backend
+        self.assertEqual(len(backend.questions_by_course['analytical']), 30)
+        self.assertEqual(len(backend.questions_by_course['procurement']), 210)
+        for course_id in ('analytical', 'procurement'):
+            for question in backend.questions_by_course[course_id].values():
+                self.assertGreaterEqual(question['correct'], 0)
+                self.assertLess(question['correct'], len(question['choices']))
+                self.assertEqual(question['answer'], question['choices'][question['correct']])
 
 
 class InterfaceStructureTests(unittest.TestCase):

@@ -34,7 +34,13 @@ DEMO_CERTIFICATE_EMAIL = os.getenv('DEMO_CERTIFICATE_EMAIL', 'zamayoo@gmail.com'
 SESSION_DAYS = 30
 MAX_BODY = 160_000
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
-questions = {q['id']: q for q in json.loads((BASE / 'dist/questions.json').read_text())['questions']}
+course_list = json.loads((BASE / 'dist/courses.json').read_text(encoding='utf-8'))
+courses = {course['id']: course for course in course_list}
+questions_by_course = {}
+for course_id, course in courses.items():
+    payload = json.loads((BASE / 'dist' / course['file']).read_text(encoding='utf-8'))
+    questions_by_course[course_id] = {question['id']: question for question in payload['questions']}
+questions = questions_by_course['audit']  # Backwards-compatible alias used by existing checks.
 speech_lock = asyncio.Semaphore(1)
 limits = {}
 
@@ -71,12 +77,16 @@ with db() as con:
         user_id INTEGER PRIMARY KEY, payload TEXT NOT NULL, updated_at INTEGER NOT NULL);
       CREATE TABLE IF NOT EXISTS certificates (
         id TEXT PRIMARY KEY, user_id INTEGER NOT NULL, name TEXT NOT NULL,
+        course_id TEXT NOT NULL DEFAULT 'audit',
         score INTEGER NOT NULL, correct INTEGER NOT NULL, passed INTEGER NOT NULL,
         created_at INTEGER NOT NULL, next_allowed_at INTEGER);
       CREATE INDEX IF NOT EXISTS certificates_user ON certificates(user_id, created_at);
       CREATE TABLE IF NOT EXISTS demo_certificates (
         user_id INTEGER PRIMARY KEY, code TEXT NOT NULL UNIQUE, created_at INTEGER NOT NULL);
     ''')
+    columns = {row['name'] for row in con.execute('PRAGMA table_info(certificates)')}
+    if 'course_id' not in columns:
+        con.execute("ALTER TABLE certificates ADD COLUMN course_id TEXT NOT NULL DEFAULT 'audit'")
 
 
 class Credentials(BaseModel):
@@ -113,8 +123,9 @@ class ExamAnswer(BaseModel):
 
 
 class ExamSubmission(BaseModel):
+    course_id: str = Field(default='audit', max_length=40)
     name: str = Field(min_length=3, max_length=160)
-    answers: list[ExamAnswer] = Field(min_length=40, max_length=40)
+    answers: list[ExamAnswer] = Field(min_length=1, max_length=50)
 
 
 class SpeechRequest(BaseModel):
@@ -361,19 +372,33 @@ def short(s, max_len=205):
 def submit_exam(data: ExamSubmission, request: Request):
     check_origin(request)
     user = logged_in(request)
+    course = courses.get(data.course_id)
+    if not course:
+        raise HTTPException(400, 'Невідомий навчальний напрям.')
+    course_questions = questions_by_course[data.course_id]
+    required = course['examSize']
     ids = [x.id for x in data.answers]
-    if len(set(ids)) != 40 or any(i not in questions or questions[i].get('missing') for i in ids):
-        raise HTTPException(400, 'Потрібно 40 різних запитань із бази.')
-    score = sum(x.answer.strip() == OVERRIDE_CORRECT.get(x.id, short(questions[x.id]['answer'])) for x in data.answers)
-    percent = (score * 100 + 20) // 40
+    if len(ids) != required or len(set(ids)) != required or any(i not in course_questions or course_questions[i].get('missing') for i in ids):
+        raise HTTPException(400, f'Потрібно {required} різних запитань із вибраного напряму.')
+    def correct_answer(question_id):
+        question = course_questions[question_id]
+        if data.course_id == 'audit':
+            return OVERRIDE_CORRECT.get(question_id, short(question['answer']))
+        return question['choices'][question['correct']]
+    score = sum(x.answer.strip() == correct_answer(x.id) for x in data.answers)
+    percent = round(score * 100 / required)
+    pass_correct = course.get('passCorrect') or ((required * course['passPercent'] + 99) // 100)
     with db() as con:
-        blocked = con.execute('SELECT MAX(next_allowed_at) AS next_at FROM certificates WHERE user_id=? AND passed=0', (user['id'],)).fetchone()
+        blocked = con.execute('SELECT MAX(next_allowed_at) AS next_at FROM certificates WHERE user_id=? AND course_id=? AND passed=0', (user['id'], data.course_id)).fetchone()
         if blocked['next_at'] and blocked['next_at'] > now():
             raise HTTPException(403, 'Повторна спроба доступна через 15 днів.')
         ident = secrets.token_hex(16)
-        passed = int(percent >= 70)
+        passed = int(score >= pass_correct)
         next_at = None if passed else now()+15*86400
-        con.execute('INSERT INTO certificates VALUES (?,?,?,?,?,?,?,?)', (ident, user['id'], data.name, percent, score, passed, now(), next_at))
+        con.execute('''INSERT INTO certificates
+            (id,user_id,name,course_id,score,correct,passed,created_at,next_allowed_at)
+            VALUES (?,?,?,?,?,?,?,?,?)''',
+            (ident, user['id'], data.name, data.course_id, percent, score, passed, now(), next_at))
     return {'id': ident, 'score': percent, 'correct': score, 'passed': bool(passed), 'next_allowed_at': next_at}
 
 
@@ -470,14 +495,15 @@ def certificate_record(identifier: str):
                     'created_at':row['created_at'],'passed':False,
                     'program':'Підготовка до тестування на державну службу',
                     'official':False,'message':'Демонстраційний зразок. Не підтверджує складання іспиту або кваліфікацію.'}
-        row=con.execute('''SELECT id,name,score,correct,passed,created_at
+        row=con.execute('''SELECT id,name,course_id,score,correct,passed,created_at
             FROM certificates WHERE id=?''',(identifier,)).fetchone()
     if not row:raise HTTPException(404,'Документ не знайдено.')
+    course = courses.get(row['course_id'], courses['audit'])
     return {'id':row['id'],'type':'training_exam','status':'passed' if row['passed'] else 'not_passed',
             'name':row['name'],'score':row['score'],'correct':row['correct'],
-            'total':40,'created_at':row['created_at'],'passed':bool(row['passed']),
-            'program':'Підготовка до тестування на державну службу',
-            'official':False,'message':'Результат навчального тестування TESTS. Не є офіційним документом НАДС.'}
+            'total':course['examSize'],'created_at':row['created_at'],'passed':bool(row['passed']),
+            'course_id':course['id'],'program':course['certificateTitle'],
+            'official':False,'message':course['disclaimer']}
 
 
 @app.get('/api/certificates/verify/{identifier}')
@@ -508,14 +534,15 @@ def verify_certificate_page(identifier: str):
     try:
         record=certificate_record(identifier)
     except HTTPException:
-        return Response('<!doctype html><html lang="uk"><meta charset="utf-8">'
+        missing_html = ('<!doctype html><html lang="uk"><meta charset="utf-8">'
                         '<title>Документ не знайдено — TESTS</title><h1>Документ не знайдено</h1>'
-                        '<p>Номер відсутній у реєстрі TESTS.</p></html>',
-                        status_code=404,media_type='text/html; charset=utf-8')
+                        '<p>Номер відсутній у реєстрі TESTS.</p></html>')
+        return Response(missing_html.encode('utf-8'), status_code=404,
+                        headers={'Content-Type':'text/html; charset=utf-8'})
     sample=record['type']=='demo'
     status='ДЕМОНСТРАЦІЙНИЙ ЗРАЗОК' if sample else ('ТЕСТУВАННЯ ПРОЙДЕНО' if record['passed'] else 'ТЕСТУВАННЯ НЕ ПРОЙДЕНО')
     date=datetime.fromtimestamp(record['created_at'],tz=timezone.utc).strftime('%d.%m.%Y %H:%M UTC')
-    details='' if sample else f"<dt>Результат</dt><dd>{record['score']} зі 100; правильних відповідей: {record['correct']} із 40</dd>"
+    details='' if sample else f"<dt>Результат</dt><dd>{record['score']} зі 100; правильних відповідей: {record['correct']} із {record['total']}</dd>"
     html=('<!doctype html><html lang="uk"><head><meta charset="utf-8">'
           '<meta name="viewport" content="width=device-width,initial-scale=1">'
           '<title>Перевірка документа — TESTS</title>'
@@ -531,8 +558,9 @@ def verify_certificate_page(identifier: str):
           '<dt>Дата реєстрації</dt><dd>'+escape(date)+'</dd>'
           '<dt>Навчальний напрям</dt><dd>'+escape(record['program'])+'</dd>'+details+'</dl>'
           '<p class="notice">'+escape(record['message'])+'</p></main></body></html>')
-    return Response(html,media_type='text/html; charset=utf-8',
-                    headers={'Cache-Control':'no-store','X-Robots-Tag':'noindex, nofollow'})
+    return Response(html.encode('utf-8'),
+                    headers={'Content-Type':'text/html; charset=utf-8',
+                             'Cache-Control':'no-store','X-Robots-Tag':'noindex, nofollow'})
 
 
 @app.get('/api/health')
@@ -540,7 +568,7 @@ def health():
     return {'ok': True, 'demo_certificate_policy': 'email-v2'}
 
 
-app.mount('/assets', StaticFiles(directory=str(BASE / 'dist')), name='assets')
+app.mount('/assets', StaticFiles(directory=str(BASE / 'dist' / 'assets')), name='assets')
 
 
 @app.get('/{full_path:path}')

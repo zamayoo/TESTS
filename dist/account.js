@@ -1,6 +1,7 @@
 /* Account UI and authenticated synchronization. No API keys in browser code. */
 window.testsAccount = (() => {
   const el = id => document.getElementById(id);
+  const courseNames={audit:'Аудит і державний фінансовий контроль',analytical:'Оперативні та аналітичні здібності',procurement:'Публічні закупівлі'};
   let user = null, timer = null, authMode = 'login', onProgressLoaded = null;
   async function api(path, options={}) {
     const response = await fetch('/api/'+path, {credentials:'same-origin',
@@ -64,7 +65,7 @@ window.testsAccount = (() => {
     const taken=Object.values(answers), correct=taken.filter(x=>x?.correct).length;
     const certificates=user.certificates||[];
     el('accountStats').innerHTML=`<div class="stat"><div><small>ОПРАЦЬОВАНО</small><strong>${taken.length}</strong></div></div><div class="stat"><div><small>ПРАВИЛЬНИХ</small><strong>${correct}</strong></div></div><div class="stat"><div><small>ТОЧНІСТЬ</small><strong>${taken.length?Math.round(correct/taken.length*100):0}%</strong></div></div><div class="stat"><div><small>ТЕСТУВАНЬ</small><strong>${certificates.length}</strong></div></div>`;
-    el('accountCertificates').innerHTML=certificates.length?certificates.map(c=>`<div class="certificate-row"><span>${safe(c.name)}<small>${new Date(c.created_at*1000).toLocaleDateString('uk-UA')}</small></span><strong>${c.score} балів · ${c.passed?'Успішно':'Не пройдено'}<small><a href="/verify/${encodeURIComponent(c.id)}" target="_blank" rel="noopener noreferrer">Перевірити в реєстрі ↗</a></small></strong></div>`).join(''):'<p>Ще немає результатів сертифікаційного тестування.</p>';
+    el('accountCertificates').innerHTML=certificates.length?certificates.map(c=>`<div class="certificate-row" data-course="${safe(c.course_id||'audit')}"><span>${safe(courseNames[c.course_id]||courseNames.audit)}<small>${safe(c.name)} · ${new Date(c.created_at*1000).toLocaleDateString('uk-UA')}</small></span><strong>${c.score} балів · ${c.passed?'Успішно':'Не пройдено'}<small><a href="/verify/${encodeURIComponent(c.id)}" target="_blank" rel="noopener noreferrer">Перевірити в реєстрі ↗</a></small></strong></div>`).join(''):'<p>Ще немає результатів сертифікаційного тестування.</p>';
 
     const demo=user.demo_certificates?.[0];
     el('demoCertificateSection').hidden=!demo;
@@ -135,9 +136,9 @@ window.testsAccount = (() => {
     timer=setTimeout(async()=>{try { await api('progress',{method:'PUT',body:JSON.stringify({payload:progress})});user.progress=progress;render(); }
       catch(e) { el('authNotice').textContent='Не вдалося синхронізувати прогрес: '+e.message; }},900);
   }
-  async function submitExam(name,cards) {
+  async function submitExam(courseId,name,cards) {
     if(!user)return null;
-    let result=await api('exams',{method:'POST',body:JSON.stringify({name,answers:cards.map(c=>({id:c.q.id,answer:c.chosen===null?'':c.quiz.choices[c.chosen]}))})});
+    let result=await api('exams',{method:'POST',body:JSON.stringify({course_id:courseId,name,answers:cards.map(c=>({id:c.q.id,answer:c.chosen===null?'':c.quiz.choices[c.chosen]}))})});
     await refresh();return result;
   }
   function setup(onLoaded) {
@@ -192,6 +193,6 @@ window.testsAccount = (() => {
     };
     return refresh();
   }
-  function blockedUntil() { if(!user)return null; const until=Math.max(0,...(user.certificates||[]).filter(c=>!c.passed).map(c=>c.next_allowed_at||0));return until*1000>Date.now()?new Date(until*1000):null; }
+  function blockedUntil(courseId) { if(!user)return null; const until=Math.max(0,...(user.certificates||[]).filter(c=>!c.passed&&(c.course_id||'audit')===courseId).map(c=>c.next_allowed_at||0));return until*1000>Date.now()?new Date(until*1000):null; }
   return {setup,sync,submitExam,refresh,show,blockedUntil,isLoggedIn:()=>!!user};
 })();
