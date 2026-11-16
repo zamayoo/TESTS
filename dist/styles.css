@@ -326,22 +326,33 @@ html[data-contrast="high"] .course-card,html[data-contrast="high"] .question-car
 @media(max-width:1100px){.course-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:700px){.course-grid{grid-template-columns:1fr}.course-card{min-height:330px}}
 html[data-contrast="high"] .eyebrow,html[data-contrast="high"] small{color:#345c64}
-@media(prefers-color-scheme:dark){
- html[data-theme="system"]{color-scheme:dark}
-}
-html[data-theme="dark"]{color-scheme:dark}
-html[data-theme="dark"],html[data-theme="dark"] body{background:#10262c!important;color:#e4f3f1!important}
-html[data-theme="dark"] .sidebar,html[data-theme="dark"] .main,html[data-theme="dark"] .route-view,html[data-theme="dark"] .course-card,html[data-theme="dark"] .account-area,html[data-theme="dark"] .settings-card,html[data-theme="dark"] .voice-settings,html[data-theme="dark"] .question-card,html[data-theme="dark"] .catalog-hero,html[data-theme="dark"] .topic-card,html[data-theme="dark"] .stat,html[data-theme="dark"] .answer,html[data-theme="dark"] .exam-box,html[data-theme="dark"] .profile-summary{background-color:#17353c!important;color:#e4f3f1!important;border-color:#416168!important}
-html[data-theme="dark"] .settings-card h2,html[data-theme="dark"] .settings-toggle strong,html[data-theme="dark"] .settings-field label,html[data-theme="dark"] .course-card h3,html[data-theme="dark"] .view-heading h1,html[data-theme="dark"] .question-card h3,html[data-theme="dark"] .sidebar strong,html[data-theme="dark"] .course-header h1{color:#e4f3f1!important}
-html[data-theme="dark"] .settings-card p,html[data-theme="dark"] .settings-toggle small,html[data-theme="dark"] .eyebrow,html[data-theme="dark"] .sidebar small{color:#b1cbca!important}
-html[data-theme="dark"] select,html[data-theme="dark"] input,html[data-theme="dark"] textarea{background:#102a31!important;border-color:#537778!important;color:#edf8f6!important}
-html[data-theme="dark"] .settings-toggle input:checked{background:#0a927d!important}
-html[data-theme="dark"] .app-nav-item.active{background:#285b59!important;color:#f2fffd!important}
-@media(prefers-color-scheme:dark){
- html[data-theme="system"]{color-scheme:dark}
- html[data-theme="system"] body{background:#10262c!important;color:#e4f3f1!important}
- html[data-theme="system"] .sidebar,html[data-theme="system"] .course-card,html[data-theme="system"] .settings-card,html[data-theme="system"] .question-card,html[data-theme="system"] .account-area,html[data-theme="system"] .voice-settings{background:#17353c!important;color:#e4f3f1!important;border-color:#416168!important}
- html[data-theme="system"] .settings-card h2,html[data-theme="system"] .settings-toggle strong,html[data-theme="system"] .settings-field label{color:#e4f3f1!important}
- html[data-theme="system"] input,html[data-theme="system"] select,html[data-theme="system"] textarea{background:#102a31!important;color:#edf8f6!important;border-color:#537778!important}
-}
+.learning-topic-overview{margin:18px 0 16px;padding:22px 24px;background:#fff;border:1px solid var(--line);border-radius:16px}.learning-topic-overview .topic-overview-head{margin-bottom:15px}.learning-topic-overview .topic-overview-head h2{font-size:22px;margin:4px 0}.learning-topic-overview .topic-overview-head p:last-child{margin:0;color:var(--muted);font-size:12px}.learning-topic-cards{grid-template-columns:repeat(3,minmax(0,1fr))}
+html[data-theme="dark"]{color-scheme:dark;--ink:#e8f2f3;--muted:#9db4b8;--line:#35525a;--bg:#0f2228;--teal:#35b8aa}
+html[data-theme="dark"],html[data-theme="dark"] body{background:#0f2228!important;color:#e8f2f3!important}
+html[data-theme="dark"] .sidebar{background:#132b32!important;border-color:#35525a!important}
+html[data-theme="dark"] .main,html[data-theme="dark"] .route-view{background:transparent!important;color:#e8f2f3!important}
+html[data-theme="dark"] .topbar{background:rgba(15,34,40,.94)!important}html[data-theme="dark"] .topbar-title strong{color:#eef7f7!important}html[data-theme="dark"] .top-actions button{background:#f8fbfa!important;color:#173a42!important;border-color:#cbdadb!important}
+html[data-theme="dark"] .course-header,html[data-theme="dark"] .account-hero{background:#fbfdfc!important;color:#193640!important;border-color:#d5e2e3!important;box-shadow:0 0 0 1px rgba(5,31,37,.03),0 10px 28px rgba(3,22,27,.14)!important}html[data-theme="dark"] .course-header h1,html[data-theme="dark"] .account-hero h1{color:#0e3640!important}html[data-theme="dark"] .course-header p:not(.eyebrow),html[data-theme="dark"] .account-hero p:not(.eyebrow){color:#647d84!important}html[data-theme="dark"] .course-header .eyebrow,html[data-theme="dark"] .account-hero .eyebrow{color:#6e898f!important}html[data-theme="dark"] .back-link{color:#08756f!important}
+html[data-theme="dark"] .brand strong,html[data-theme="dark"] .app-nav-item strong,html[data-theme="dark"] .workspace-head h2,html[data-theme="dark"] .topic-overview-head h2{color:#eff8f8!important}
+html[data-theme="dark"] .brand small,html[data-theme="dark"] .app-nav-item small,html[data-theme="dark"] .eyebrow,html[data-theme="dark"] .progress-line{color:#9db7bb!important}
+html[data-theme="dark"] .app-nav-item{color:#c8dadd!important}html[data-theme="dark"] .app-nav-item:hover{filter:none}
+html[data-theme="dark"] .app-nav-item.active{background:#e6f5f2!important;color:#123f46!important}html[data-theme="dark"] .app-nav-item.active strong{color:#123f46!important}html[data-theme="dark"] .app-nav-item.active small{color:#4f7277!important}
+html[data-theme="dark"] .block{color:#d6e5e7!important}html[data-theme="dark"] .block strong{color:#e6f0f1!important}html[data-theme="dark"] .block small{color:#9db8bc!important}html[data-theme="dark"] .block-progress{background:#36535b!important}
+html[data-theme="dark"] .block:hover{background:#1b3941!important}html[data-theme="dark"] .block.active{background:#dff2ee!important;color:#12474b!important}html[data-theme="dark"] .block.active strong{color:#123f45!important}html[data-theme="dark"] .block.active small{color:#53777a!important}html[data-theme="dark"] .block.active .block-progress{background:#bdd8d3!important}
+html[data-theme="dark"] .course-card,html[data-theme="dark"] .account-area,html[data-theme="dark"] .settings-card,html[data-theme="dark"] .voice-settings,html[data-theme="dark"] .catalog-hero,html[data-theme="dark"] .topic-overview,html[data-theme="dark"] .topic-card,html[data-theme="dark"] .exam-box,html[data-theme="dark"] .profile-summary{background:#17323a!important;color:#e8f2f3!important;border-color:#35525a!important;box-shadow:0 0 0 1px rgba(255,255,255,.025)!important}
+html[data-theme="dark"] .course-card h3,html[data-theme="dark"] .view-heading h1,html[data-theme="dark"] .settings-card h2,html[data-theme="dark"] .settings-toggle strong,html[data-theme="dark"] .settings-field label,html[data-theme="dark"] .topic-card-copy strong{color:#eff8f8!important}
+html[data-theme="dark"] .course-card p,html[data-theme="dark"] .settings-card p,html[data-theme="dark"] .settings-toggle small,html[data-theme="dark"] .topic-card-copy small,html[data-theme="dark"] .topic-overview-head p:last-child{color:#aac0c4!important}
+html[data-theme="dark"] .topic-card:hover{background:#1d3b43!important;border-color:#4d777b!important}html[data-theme="dark"] .topic-card.active{background:#21454a!important;border-color:#4fc3b3!important}html[data-theme="dark"] .topic-card-icon{background:#22454a!important;color:#65d0c0!important}
+html[data-theme="dark"] .stat,html[data-theme="dark"] .question-card,html[data-theme="dark"] .answer{background:#fbfdfc!important;color:#1d3740!important;border-color:#d5e2e3!important;box-shadow:0 0 0 1px rgba(5,31,37,.03),0 10px 28px rgba(3,22,27,.14)!important}
+html[data-theme="dark"] .stat small{color:#647a83!important}html[data-theme="dark"] .stat strong{color:#173b43!important}html[data-theme="dark"] .question-card h3{color:#102f38!important;font-weight:750!important}html[data-theme="dark"] .icon-btn{color:#617a82!important}
+html[data-theme="dark"] .question-actions button{color:#086e68!important}html[data-theme="dark"] .question-actions button:first-child{background:#e2f3ef!important}html[data-theme="dark"] .detail-controls button{color:#345d66!important}
+html[data-theme="dark"] .answer:hover:not(:disabled){background:#f0f8f6!important;border-color:#68afa6!important}html[data-theme="dark"] .answer .letter{color:#547078!important;border-color:#c8d9d9!important}html[data-theme="dark"] .answer.chosen{background:#e6f7f3!important;border-color:#16897e!important}
+html[data-theme="dark"] .notes{border-color:#dce7e7!important}html[data-theme="dark"] .notes label,html[data-theme="dark"] .notes span{color:#607880!important}html[data-theme="dark"] .notes textarea{background:#f5f9f8!important;color:#203c45!important;border-color:#c9d9db!important}
+html[data-theme="dark"] .search{background:#fbfdfc!important;border-color:#d5e2e3!important;color:#365b63!important}html[data-theme="dark"] .search input{background:transparent!important;color:#17353d!important;border:0!important}html[data-theme="dark"] .search input::placeholder{color:#6d858c!important}
+html[data-theme="dark"] .filters select,html[data-theme="dark"] .jump input{background:#fbfdfc!important;color:#17353d!important;border-color:#cadbdd!important}
+html[data-theme="dark"] input,html[data-theme="dark"] select,html[data-theme="dark"] textarea{background:#112b32;color:#eef7f7;border-color:#4c6d73}html[data-theme="dark"] .settings-toggle input:checked{background:#18a18f!important}
+html[data-theme="dark"] .bar{background:#365159!important}html[data-theme="dark"] .bar span{background:#4bc1b1!important}html[data-theme="dark"] .notice{background:#17323a!important;color:#d9e7e8!important;border-color:#35525a!important}html[data-theme="dark"] .notice p{color:#aac0c4!important}
+html[data-theme="dark"] :focus-visible{outline:3px solid #6ad3c5!important;outline-offset:3px}
+@media(max-width:1100px){.learning-topic-cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.learning-topic-overview{padding:18px}.learning-topic-cards{display:flex;overflow-x:auto;scroll-snap-type:x proximity;padding-bottom:5px}.learning-topic-cards .topic-card{min-width:min(82vw,300px);scroll-snap-align:start}}
 @media(max-width:850px){#settingsView .settings-grid{grid-template-columns:1fr}}

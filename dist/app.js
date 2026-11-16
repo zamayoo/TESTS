@@ -81,9 +81,12 @@ function loadPrefs(){
  }catch{return {...PREFS_DEFAULT}}
 }
 let prefs=loadPrefs();
+const systemThemeQuery=window.matchMedia?.('(prefers-color-scheme: dark)');
 function applyPrefs(){
  const root=document.documentElement;
- root.dataset.theme=prefs.theme;
+ const systemDark=systemThemeQuery?.matches;
+ root.dataset.theme=prefs.theme==='system'?(systemDark?'dark':'light'):prefs.theme;
+ root.dataset.themePreference=prefs.theme;
  root.dataset.density=prefs.density;
  root.dataset.contrast=prefs.contrast?'high':'normal';
  root.dataset.motion=prefs.motion?'reduced':'normal';
@@ -91,6 +94,7 @@ function applyPrefs(){
  root.style.setProperty('--scale',String(prefs.font/100));
  if($('prefFontValue'))$('prefFontValue').textContent=prefs.font+'%';
 }
+systemThemeQuery?.addEventListener?.('change',()=>{if(prefs.theme==='system')applyPrefs()});
 function updatePref(key,value){
  prefs[key]=value;
  try{localStorage.setItem(PREFS_KEY,JSON.stringify(prefs))}catch{}
@@ -173,10 +177,15 @@ function currentList(){return items.filter(q=>{
  return true;
  })}
 function getCurrent(){let list=currentList();if(active>=list.length)active=Math.max(0,list.length-1);return list[active]}
+function renderTopicCardSet(container,groups){
+ if(!container)return;
+ container.innerHTML=groups.map(g=>{const questions=items.filter(q=>g.id==='all'||q.group===g.id&&!q.missing),done=questions.filter(q=>state.answers[q.id]).length,total=questions.length,percent=total?Math.round(done/total*100):0;return `<button class="topic-card ${activeGroup===g.id?'active':''}" data-topic="${safe(g.id)}" type="button"><span class="topic-card-icon">${icons[g.id]||'▤'}</span><span class="topic-card-copy"><strong>${safe(g.title)}</strong><small>${total} питань</small></span><span class="topic-ring" style="--pct:${percent}%">${percent}%</span><span class="topic-arrow">›</span></button>`}).join('');
+ container.querySelectorAll('[data-topic]').forEach(b=>b.onclick=()=>{activeGroup=b.dataset.topic;rememberCurrentTopic();active=0;query='';filter='all';$('search').value='';$('filter').value='all';render();navigate('learning');$('questionCard').scrollIntoView({behavior:'smooth',block:'start'})});
+}
 function renderBlocks(){let groups=[{id:'all',title:'Усі питання'}].concat(data.groups);
  $('blocks').innerHTML=groups.map(g=>{let questions=items.filter(q=>g.id==='all'||q.group===g.id);let answered=questions.filter(q=>state.answers[q.id]).length;return `<button class="block ${activeGroup===g.id?'active':''}" data-group="${g.id}"><span class="block-ico">${icons[g.id]||'▤'}</span><span><strong>${safe(g.title)}</strong><small>${answered} / ${questions.filter(q=>!q.missing).length} опрацьовано</small><span class="block-progress"><span style="width:${questions.filter(q=>!q.missing).length?Math.round(answered/questions.filter(q=>!q.missing).length*100):0}%"></span></span></span></button>`}).join('');
  document.querySelectorAll('.block').forEach(b=>b.onclick=()=>{activeGroup=b.dataset.group;rememberCurrentTopic();active=0;query='';filter='all';$('search').value='';$('filter').value='all';render();navigate('learning')});
- const cards=$('topicCards');if(cards){cards.innerHTML=groups.map(g=>{const questions=items.filter(q=>g.id==='all'||q.group===g.id&&!q.missing),done=questions.filter(q=>state.answers[q.id]).length,total=questions.length,percent=total?Math.round(done/total*100):0;return `<button class="topic-card ${activeGroup===g.id?'active':''}" data-topic="${safe(g.id)}" type="button"><span class="topic-card-icon">${icons[g.id]||'▤'}</span><span class="topic-card-copy"><strong>${safe(g.title)}</strong><small>${total} питань</small></span><span class="topic-ring" style="--pct:${percent}%">${percent}%</span><span class="topic-arrow">›</span></button>`}).join('');cards.querySelectorAll('[data-topic]').forEach(b=>b.onclick=()=>{activeGroup=b.dataset.topic;rememberCurrentTopic();active=0;query='';filter='all';$('search').value='';$('filter').value='all';render();navigate('learning');$('questionCard').scrollIntoView({behavior:'smooth',block:'start'})})}
+ renderTopicCardSet($('topicCards'),groups);renderTopicCardSet($('learningTopicCards'),groups);
 }
 function renderStats(){let present=items.filter(q=>!q.missing);let taken=present.filter(q=>state.answers[q.id]);let correct=taken.filter(q=>state.answers[q.id].correct);let wrong=taken.length-correct.length;
  const bits=[['ОПРАЦЬОВАНО',taken.length,'▤'],['ПРАВИЛЬНИХ',correct.length,'✓'],['ПОМИЛОК',wrong,'↺'],['ТОЧНІСТЬ',taken.length?Math.round(correct.length/taken.length*100)+'%':'0%','◎']];$('stats').innerHTML=bits.map(a=>`<div class="stat"><div><small>${a[0]}</small><strong>${a[1]}</strong></div><div class="stat-icon">${a[2]}</div></div>`).join('')}

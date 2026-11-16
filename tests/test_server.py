@@ -212,12 +212,17 @@ class InterfaceStructureTests(unittest.TestCase):
         self.assertIn("localStorage.setItem(PREFS_KEY", js)
         self.assertIn("function applyPrefs()", js)
         self.assertIn("function setupPreferences()", js)
+        self.assertIn("prefs.theme==='system'?(systemDark?'dark':'light')", js)
         self.assertIn("if(prefs.autoNext", js)
         self.assertIn('html[data-theme="dark"]', css)
+        self.assertIn('html[data-theme="dark"] .question-card h3{color:#102f38!important', css)
+        self.assertIn('html[data-theme="dark"] .block strong{color:#e6f0f1!important', css)
         self.assertIn('html[data-density="compact"]', css)
         self.assertIn('html[data-motion="reduced"]', css)
         self.assertIn('html[data-show-progress="no"]', css)
         self.assertIn('Відновити стандартні налаштування', html)
+        self.assertEqual(html.count('id="learningTopicCards"'), 1)
+        self.assertIn("renderTopicCardSet($('learningTopicCards'),groups)", js)
 
     def test_spa_views_and_navigation_are_separate(self):
         root = Path(__file__).parents[1]
