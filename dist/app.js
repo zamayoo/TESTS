@@ -1,7 +1,7 @@
 /* Тести на державну службу: source texts remain separate from generated options. */
 const $=id=>document.getElementById(id);
 const STORAGE='audit-trainer-progress-v1';
-const icons={legislation:'⚖',isa:'◈',intosai:'◇',accounting:'▦',analysis:'⌁'};
+const icons={legislation:'⚖',isa:'◈',intosai:'◇',accounting:'▦',analysis:'⌁','numeric-iq':'∑','logic-iq':'◇','verbal-iq':'Aa','spatial-iq':'◫','attention-iq':'◎'};
 const letters=['A','B','C','D','E','F','G','H','I'];
 // Only citations checked against official legal texts are allowed in explanations.
 const verifiedNorms={

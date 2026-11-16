@@ -168,7 +168,7 @@ class AccountTests(unittest.TestCase):
 
     def test_z_each_new_course_is_scored_with_its_own_rules(self):
         backend = self.backend
-        for course_id in ('analytical', 'procurement'):
+        for course_id in ('analytical', 'procurement', 'iq'):
             course = backend.courses[course_id]
             selected = list(backend.questions_by_course[course_id].values())[:course['examSize']]
             answers = [{'id': q['id'], 'answer': q['choices'][q['correct']]} for q in selected]
@@ -188,7 +188,10 @@ class AccountTests(unittest.TestCase):
         backend = self.backend
         self.assertEqual(len(backend.questions_by_course['analytical']), 30)
         self.assertEqual(len(backend.questions_by_course['procurement']), 210)
-        for course_id in ('analytical', 'procurement'):
+        self.assertEqual(len(backend.questions_by_course['iq']), 38)
+        self.assertEqual(backend.courses['iq']['timeLimitMinutes'], 20)
+        self.assertIn('не є стандартизованим показником IQ', backend.courses['iq']['disclaimer'])
+        for course_id in ('analytical', 'procurement', 'iq'):
             for question in backend.questions_by_course[course_id].values():
                 self.assertGreaterEqual(question['correct'], 0)
                 self.assertLess(question['correct'], len(question['choices']))
