@@ -127,6 +127,7 @@ class AccountTests(unittest.TestCase):
         backend = self.backend
         fake_wav = b'RIFF' + (b'\x00' * 1200)
         with patch.object(backend.modern_voice, 'model_ready', return_value=True), \
+             patch.object(backend.modern_voice, 'operational', return_value=True), \
              patch.object(backend.modern_voice, 'synthesize', return_value=(fake_wav, 'нагол+ос')):
             response = self.client.post('/api/voice', json={
                 'text': 'Хто є розпорядником бюджетних коштів?'

@@ -12,6 +12,7 @@ import os
 import re
 import shutil
 import threading
+import time
 import unicodedata
 
 
@@ -19,7 +20,10 @@ MODEL_FILES = ("model.pth", "config.yaml", "spk_xvector.ark", "feats_stats.npz")
 MODEL_DIR = Path(os.getenv("UKRAINIAN_TTS_CACHE", "/models/ukrainian-tts-v6"))
 _engine = None
 _engine_lock = threading.Lock()
+_synthesis_lock = threading.Lock()
 _last_error = None
+_operational = False
+_warmup_started = False
 
 
 def model_ready() -> bool:
@@ -29,6 +33,31 @@ def model_ready() -> bool:
 def last_error() -> str | None:
     """Return a path-sanitized runtime diagnostic for the health endpoint."""
     return _last_error
+
+
+def operational() -> bool:
+    return _operational
+
+
+def start_warmup() -> None:
+    """Load and exercise the engine in the background before users need it."""
+    global _warmup_started
+    if _warmup_started:
+        return
+    _warmup_started = True
+
+    def warmup():
+        deadline = time.monotonic() + 900
+        while time.monotonic() < deadline:
+            if model_ready():
+                try:
+                    synthesize("Перевірка українського голосу.")
+                except Exception:
+                    pass
+                return
+            time.sleep(2)
+
+    threading.Thread(target=warmup, name="ukrainian-tts-warmup", daemon=True).start()
 
 
 def prepare_text(text: str) -> str:
@@ -79,18 +108,20 @@ def _get_engine():
 
 def synthesize(text: str) -> tuple[bytes, str]:
     """Return WAV bytes and the stress-annotated text used for synthesis."""
-    global _last_error
+    global _last_error, _operational
     from ukrainian_tts.tts import Voices, Stress
 
-    try:
-        output = BytesIO()
-        output, accented = _get_engine().tts(
-            prepare_text(text), Voices.Tetiana.value, Stress.Dictionary.value, output
-        )
-        _last_error = None
-        return output.getvalue(), accented
-    except Exception as exc:
-        message = str(exc).replace(str(MODEL_DIR), "[model]")[:300]
-        _last_error = f"{type(exc).__name__}: {message}"
-        raise
+    with _synthesis_lock:
+        try:
+            output = BytesIO()
+            output, accented = _get_engine().tts(
+                prepare_text(text), Voices.Tetiana.value, Stress.Dictionary.value, output
+            )
+            _last_error = None
+            _operational = True
+            return output.getvalue(), accented
+        except Exception as exc:
+            message = str(exc).replace(str(MODEL_DIR), "[model]")[:300]
+            _last_error = f"{type(exc).__name__}: {message}"
+            raise
 

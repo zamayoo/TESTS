@@ -46,6 +46,11 @@ speech_lock = asyncio.Semaphore(1)
 limits = {}
 
 
+@app.on_event('startup')
+def warm_modern_ukrainian_voice():
+    modern_voice.start_warmup()
+
+
 def now():
     return int(time.time())
 
@@ -407,9 +412,11 @@ def submit_exam(data: ExamSubmission, request: Request):
 def voice_status():
     model = Path(os.getenv('PIPER_MODEL', '/models/uk_UA-tetiana-high.onnx'))
     fallback_ready = model.is_file() and model.with_suffix('.onnx.json').is_file()
-    primary_ready = modern_voice.model_ready()
+    primary_installed = modern_voice.model_ready()
+    primary_ready = modern_voice.operational()
     result = {
         'ready': primary_ready or fallback_ready,
+        'primary_installed': primary_installed,
         'primary_ready': primary_ready,
         'fallback_ready': fallback_ready,
         'engine': 'ukrainian-tts-v6' if primary_ready else ('piper-fallback' if fallback_ready else 'unavailable'),
@@ -426,11 +433,11 @@ async def voice(data: SpeechRequest, request: Request):
     throttle(request, 'voice', 30, 60)
     model = Path(os.getenv('PIPER_MODEL', '/models/uk_UA-tetiana-high.onnx'))
     fallback_ready = model.is_file() and model.with_suffix('.onnx.json').is_file()
-    if not modern_voice.model_ready() and not fallback_ready:
+    if not modern_voice.operational() and not fallback_ready:
         raise HTTPException(503, 'Голосову модель ще не встановлено на сервері.')
     async with speech_lock:
         def synthesize():
-            if modern_voice.model_ready():
+            if modern_voice.operational():
                 try:
                     audio, _accented = modern_voice.synthesize(data.text)
                     if audio.startswith(b'RIFF') and len(audio) > 1000:
