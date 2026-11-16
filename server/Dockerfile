@@ -1,11 +1,13 @@
 FROM python:3.10-slim
-RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates git libsndfile1 && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates git libsndfile1 build-essential && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY server/requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 COPY server/voice-requirements.txt /app/voice-requirements.txt
 RUN pip install --no-cache-dir 'torch==2.1.2+cpu' --index-url https://download.pytorch.org/whl/cpu
-RUN pip install --no-cache-dir -r voice-requirements.txt
+RUN pip install --no-cache-dir -r voice-requirements.txt \
+    && apt-get purge -y --auto-remove build-essential \
+    && rm -rf /var/lib/apt/lists/*
 COPY server/ /app/server/
 COPY dist/questions.json /app/questions.json
 COPY dist/ /app/dist/
