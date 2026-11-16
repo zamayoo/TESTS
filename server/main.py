@@ -1,4 +1,4 @@
-"""Self-hosted email accounts, progress, certificates and Ukrainian Piper speech."""
+"""Self-hosted accounts, certificates and offline Ukrainian speech."""
 import asyncio
 import base64
 import hashlib
@@ -25,6 +25,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, EmailStr, Field
+from server import modern_voice
 
 BASE = Path(__file__).resolve().parent.parent
 DB_PATH = Path(os.getenv('DATA_PATH', '/data/tests.db'))
@@ -405,7 +406,15 @@ def submit_exam(data: ExamSubmission, request: Request):
 @app.get('/api/voice/status')
 def voice_status():
     model = Path(os.getenv('PIPER_MODEL', '/models/uk_UA-tetiana-high.onnx'))
-    return {'ready': model.is_file() and model.with_suffix('.onnx.json').is_file(), 'name': 'Тетяна · українська жіноча · Piper'}
+    fallback_ready = model.is_file() and model.with_suffix('.onnx.json').is_file()
+    primary_ready = modern_voice.model_ready()
+    return {
+        'ready': primary_ready or fallback_ready,
+        'primary_ready': primary_ready,
+        'fallback_ready': fallback_ready,
+        'engine': 'ukrainian-tts-v6' if primary_ready else ('piper-fallback' if fallback_ready else 'unavailable'),
+        'name': 'Тетяна · Ukrainian TTS v6 · автоматичні наголоси' if primary_ready else 'Тетяна · резервний Piper',
+    }
 
 
 @app.post('/api/voice')
@@ -413,22 +422,36 @@ async def voice(data: SpeechRequest, request: Request):
     check_origin(request)
     throttle(request, 'voice', 30, 60)
     model = Path(os.getenv('PIPER_MODEL', '/models/uk_UA-tetiana-high.onnx'))
-    if not model.is_file() or not model.with_suffix('.onnx.json').is_file():
+    fallback_ready = model.is_file() and model.with_suffix('.onnx.json').is_file()
+    if not modern_voice.model_ready() and not fallback_ready:
         raise HTTPException(503, 'Голосову модель ще не встановлено на сервері.')
     async with speech_lock:
         def synthesize():
+            if modern_voice.model_ready():
+                try:
+                    audio, _accented = modern_voice.synthesize(data.text)
+                    if audio.startswith(b'RIFF') and len(audio) > 1000:
+                        return audio, 'ukrainian-tts-v6'
+                except Exception:
+                    if not fallback_ready:
+                        raise
             with tempfile.TemporaryDirectory() as d:
                 output = Path(d) / 'output.wav'
                 p = subprocess.run(['piper', '--model', str(model), '--output_file', str(output)],
-                                   input=data.text, text=True, capture_output=True, timeout=90)
+                                   input=modern_voice.prepare_text(data.text), text=True,
+                                   capture_output=True, timeout=90)
                 if p.returncode or not output.is_file():
                     raise RuntimeError(p.stderr[-300:])
-                return output.read_bytes()
+                return output.read_bytes(), 'piper-fallback'
         try:
-            audio = await asyncio.to_thread(synthesize)
+            audio, engine = await asyncio.to_thread(synthesize)
         except Exception:
             raise HTTPException(503, 'Не вдалося синтезувати аудіо.')
-    return Response(audio, media_type='audio/wav', headers={'Cache-Control': 'no-store'})
+    return Response(audio, media_type='audio/wav', headers={
+        'Cache-Control': 'no-store',
+        'X-TTS-Engine': engine,
+        'X-TTS-Stress': 'automatic' if engine == 'ukrainian-tts-v6' else 'fallback',
+    })
 
 
 @app.get('/api/google/start')

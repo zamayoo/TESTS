@@ -1,6 +1,6 @@
 # Nexus: tests.finoraledger.com
 
-The service includes FastAPI, server-backed email accounts, SQLite, certificates, optional Google OAuth, and an on-premise Ukrainian female Piper voice. No runtime ChatGPT/OpenAI tokens are used. The existing Cloudflare Tunnel → Nginx Proxy Manager routing stays unchanged.
+The service includes FastAPI, server-backed email accounts, SQLite, certificates, optional Google OAuth, and an on-premise Ukrainian female voice. No runtime ChatGPT/OpenAI tokens are used. The existing Cloudflare Tunnel → Nginx Proxy Manager routing stays unchanged.
 
 ## First setup on LXC 113
 
@@ -23,7 +23,9 @@ Required email variables: `SMTP_HOST`, `SMTP_PORT`, `SMTP_STARTTLS`, `SMTP_USERN
 
 Optional Google sign-in: create a Google OAuth web client in Google Cloud, add `https://tests.finoraledger.com/api/google/callback` to authorized redirect URIs, and configure `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`. Email/password login does not require Google OAuth.
 
-The voice downloader fetches `uk_UA-tetiana-high` from `RomanStasyshyn/uk_UA-tetiana-high` (Apache-2.0, approximately 114 MB) and stores weights outside Git. Piper runs locally without a per-request TTS API cost. Model: <https://huggingface.co/RomanStasyshyn/uk_UA-tetiana-high>.
+The primary voice is `robinhad/ukrainian-tts` v6 (MIT). It runs locally, expands numbers and punctuation, and applies automatic Ukrainian lexical stress using a dictionary with a neural fallback. The pinned source revision is recorded in `server/voice-requirements.txt`; its approximately 446 MB model is downloaded into `./models/ukrainian-tts-v6` and never committed. Model: <https://github.com/robinhad/ukrainian-tts>.
+
+`uk_UA-tetiana-high` Piper remains an Apache-2.0 offline fallback while the primary model downloads or if it cannot start. Questions are never sent to a third-party speech API.
 
 ## Check
 
@@ -51,6 +53,6 @@ Volume `./data` holds the persistent SQLite database (including progress and cer
 
 - Until SMTP variables are configured, email registration/reset cannot send messages.
 - Until Google OAuth credentials are configured, Google sign-in cannot work.
-- Until Piper weights are installed in `./models`, the new voice reports unavailable. Device speech remains selectable.
+- Until the Ukrainian TTS v6 or fallback Piper weights are installed in `./models`, the server voice reports unavailable. Device speech remains selectable.
 - Existing browser-local progress can be exported/imported. The account cabinet syncs after sign-in; existing server progress takes priority when present.
 - These are **training certificates**, not official НАДС documents.

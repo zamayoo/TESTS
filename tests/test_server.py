@@ -123,6 +123,19 @@ class AccountTests(unittest.TestCase):
         self.assertIn('window.addEventListener(\'afterprint\'',account)
         self.assertIn('window.addEventListener(\'afterprint\'',app)
 
+    def test_modern_ukrainian_voice_is_primary_and_marks_automatic_stress(self):
+        backend = self.backend
+        fake_wav = b'RIFF' + (b'\x00' * 1200)
+        with patch.object(backend.modern_voice, 'model_ready', return_value=True), \
+             patch.object(backend.modern_voice, 'synthesize', return_value=(fake_wav, 'нагол+ос')):
+            response = self.client.post('/api/voice', json={
+                'text': 'Хто є розпорядником бюджетних коштів?'
+            })
+        self.assertEqual(response.status_code, 200, response.text)
+        self.assertEqual(response.content, fake_wav)
+        self.assertEqual(response.headers['x-tts-engine'], 'ukrainian-tts-v6')
+        self.assertEqual(response.headers['x-tts-stress'], 'automatic')
+
     def test_registration_verification_login_reset_and_progress(self):
         backend = self.backend
         with patch.object(backend, 'send_mail') as send:
@@ -199,6 +212,21 @@ class AccountTests(unittest.TestCase):
 
 
 class InterfaceStructureTests(unittest.TestCase):
+    def test_speech_text_and_ukrainian_normalization_are_reader_friendly(self):
+        root = Path(__file__).parents[1]
+        from server.modern_voice import prepare_text
+        prepared = prepare_text('Питання № 12:\n75% / 25%; що правильно?')
+        self.assertEqual(
+            prepared,
+            'Питання номер 12. 75 відсотків або 25 відсотків, що правильно?'
+        )
+        app = (root / 'dist' / 'app.js').read_text(encoding='utf-8')
+        requirements = (root / 'server' / 'voice-requirements.txt').read_text(encoding='utf-8')
+        self.assertIn("const labels=['А','Б','В','Г','Д','Е']", app)
+        self.assertIn('function speechText(q,opt)', app)
+        self.assertIn('X-TTS-Engine', app)
+        self.assertIn('ffbd0673bab13c3a8c5040e494653d1e549e141f', requirements)
+
     def test_settings_workspace_and_preferences_are_isolated(self):
         root = Path(__file__).parents[1]
         html = (root / 'dist' / 'index.html').read_text(encoding='utf-8')

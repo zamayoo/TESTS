@@ -1,0 +1,3 @@
+# Ukrainian-specific offline TTS with automatic dictionary/neural stress.
+# Pin the reviewed upstream revision; model weights are downloaded separately.
+ukrainian-tts @ git+https://github.com/robinhad/ukrainian-tts.git@ffbd0673bab13c3a8c5040e494653d1e549e141f

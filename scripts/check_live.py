@@ -14,7 +14,7 @@ import wave
 
 BASE = os.environ.get("TESTS_URL", "https://tests.finoraledger.com").rstrip("/")
 ROOT = Path(__file__).resolve().parents[1]
-WAIT = 420 if os.environ.get("GITHUB_EVENT_NAME") == "push" else 0
+WAIT = 720 if os.environ.get("GITHUB_EVENT_NAME") == "push" else 0
 
 class NoRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):
@@ -70,6 +70,9 @@ def deployment_ready():
     health = json.loads(body)
     if health.get("demo_certificate_policy") != "email-v2":
         raise RuntimeError("Backend does not include the email-bound demo certificate fix")
+    voice = require_json("/api/voice/status")
+    if voice.get("engine") != "ukrainian-tts-v6" or voice.get("primary_ready") is not True:
+        raise RuntimeError("Modern Ukrainian voice is not ready yet: " + repr(voice))
     return "Homepage, JS assets and email-bound demo certificate backend match GitHub main"
 
 def require_json(path, status_expected=200):
@@ -88,9 +91,9 @@ def check_api():
 
 def check_voice_status():
     obj = require_json("/api/voice/status")
-    if obj.get("ready") is not True:
-        raise RuntimeError("Piper voice not ready: " + repr(obj))
-    return obj.get("name", "Piper ready")
+    if obj.get("primary_ready") is not True or obj.get("engine") != "ukrainian-tts-v6":
+        raise RuntimeError("Ukrainian TTS v6 not ready: " + repr(obj))
+    return obj.get("name", "Ukrainian TTS v6 ready")
 
 def check_audio():
     status, headers, body = fetch(
@@ -102,6 +105,10 @@ def check_audio():
         raise RuntimeError("Voice HTTP " + str(status) + ": " + body[:250].decode("utf-8", "replace"))
     if not body.startswith(b"RIFF") or body[8:12] != b"WAVE":
         raise RuntimeError("Voice did not return valid WAV header")
+    if headers.get("X-TTS-Engine") != "ukrainian-tts-v6":
+        raise RuntimeError("Voice endpoint used " + str(headers.get("X-TTS-Engine")))
+    if headers.get("X-TTS-Stress") != "automatic":
+        raise RuntimeError("Automatic stress header is missing")
     with wave.open(io.BytesIO(body)) as wav:
         length = wav.getnframes() / wav.getframerate()
     if not 0.5 <= length <= 120:
@@ -143,8 +150,8 @@ while True:
         time.sleep(15)
 
 check("Backend API", check_api)
-check("Piper installed", check_voice_status)
-check("Piper synthesizes real WAV", check_audio)
+check("Ukrainian TTS v6 installed", check_voice_status)
+check("Automatic-stress voice synthesizes real WAV", check_audio)
 check("Private profile protected", check_anonymous_auth)
 check("Google OAuth starting flow", check_google_start)
 check("Privacy", check_privacy)
