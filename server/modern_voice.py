@@ -10,6 +10,7 @@ from io import BytesIO
 from pathlib import Path
 import os
 import re
+import shutil
 import threading
 import unicodedata
 
@@ -63,6 +64,14 @@ def _get_engine():
         if _engine is None:
             if not model_ready():
                 raise RuntimeError("modern Ukrainian voice is still downloading")
+            # ESPnet 202301 resolves this config entry against the process
+            # working directory instead of the YAML file's directory.
+            # Keep the upstream model volume immutable and place its tiny
+            # normalization statistics file where ESPnet actually looks.
+            relative_stats = Path.cwd() / "feats_stats.npz"
+            source_stats = MODEL_DIR / "feats_stats.npz"
+            if relative_stats.resolve() != source_stats.resolve():
+                shutil.copyfile(source_stats, relative_stats)
             from ukrainian_tts.tts import TTS
             _engine = TTS(cache_folder=str(MODEL_DIR), device="cpu")
     return _engine
