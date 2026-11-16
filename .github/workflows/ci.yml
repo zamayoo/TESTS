@@ -41,3 +41,13 @@ jobs:
 
       - name: Check repository diff hygiene
         run: git diff --check
+
+  voice-container:
+    name: Build offline voice container
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Build application and Ukrainian TTS image
+        run: docker build --progress=plain -f server/Dockerfile -t tests-voice-check .
